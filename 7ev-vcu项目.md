@@ -329,7 +329,7 @@ mkfs.vfat /dev/mmcblk0p1
 
 ## 安装ubuntu根文件系统
 
-### 移植ubuntu18.04
+### 
 
 1、首先解压ubuntu根文件系统
 
@@ -355,7 +355,9 @@ sudo cp 7ev-ubuntu.tar.gz /media/linuxusb/ROOT/
 sync
 ```
 
-4、配置网络
+### 移植ubuntu18.04
+
+配置网络
 
 启动后，以太网无法自行连接到网络。相反，它需要一些配置才能正常工作。如果您发现自己处于断开连接的情况，请执行以下步骤。
 
@@ -677,12 +679,15 @@ mtd2: 00010000 00020000 "qspi-device-tree"
 mtd3: 00500000 00020000 "qspi-rootfs"
 mtd4: 005e0000 00020000 "qspi-bitstream"
 
-## 写入FLASH （包含擦除、写入、校验）
-flashcp -v ./smaple.bin /dev/mtd0
+## 写入FLASH （包含擦除、写入、校验）  （校验出问题 应该没事）
+flashcp -v ./BOOT.BIN /dev/mtd0
 
 Erasing block: 32/32 (100%)
 Writing kb: 4088/4096 (99%)
 Verifying kb: 4088/4096 (99%)
+
+## 直接更新
+dd if=新的BOOT.BIN of=/dev/mtdb0
 ```
 
 ## **参考文献：**
