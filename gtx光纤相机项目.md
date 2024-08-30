@@ -284,7 +284,7 @@ pip install click==8.1.3
 
 # linux下vivado检测不到硬件
 
-
+vivado检测不到JTAG
 
 进入vivado安装目录下的这个位置：
 
