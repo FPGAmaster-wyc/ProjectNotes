@@ -49,7 +49,7 @@ $ bzip2 -d patch-4.19-dovetail1.patch.bz2
 ```
 
 
-而后进入Linux目录，打入补丁：
+而后进入xenomai目录，打入补丁：
 
 ```shell
 ./scripts/prepare-kernel.sh --arch=arm --ipipe=../ipipe-core-4.9.24-arm-2.patch --linux=../linux-4.9.24
@@ -59,6 +59,8 @@ $ bzip2 -d patch-4.19-dovetail1.patch.bz2
 
 ## 2、加载zynq配置文件
 
+切换到linux内核源码路径，然后输入下面指令加载zynq配置文件
+
 ```shell
 make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- xilinx_zynq_defconfig
 ```
@@ -67,6 +69,19 @@ make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- xilinx_zynq_defconfig
 
 ```shell
 make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- menuconfig
+```
+
+需要关闭的有
+
+```shell
+CPU Power Management --->
+	CPU Frequency scaling  --->
+		[] CPU Frequency scaling
+	CPU Idle  --->
+		[] CPU idle PM support
+
+Kernel Features  --->
+	[ ] Contiguous Memory Allocator
 ```
 
 ## 4、编译内核

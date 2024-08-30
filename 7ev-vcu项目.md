@@ -106,8 +106,6 @@ Root filesystem type (EXT4 (SD/eMMC/SATA/USB))  --->
         #size-cells = <1>;
   };
 };
-
-
 ```
 
 
