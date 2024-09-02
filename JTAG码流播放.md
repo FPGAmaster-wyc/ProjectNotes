@@ -278,14 +278,14 @@ SPI-Flash芯片数据读操作的相关内容。数据读操作，操作指令�
 
 `petalinux-boot` 是一个用于在硬件上加载和引导 PetaLinux 镜像的工具，支持 JTAG 和 QEMU 两种模式。常见的使用场景包括通过 JTAG 下载比特流到 FPGA，并加载 FSBL、PMUFW、U-Boot 或 Linux 内核等。
 
-### 基本用法
+## **基本用法**
 
 - **--jtag | --qemu**: 必选参数，用于指定引导模式。`--jtag` 通过 JTAG 引导，`--qemu` 通过 QEMU 仿真引导。
   - `1`: 下载 FPGA 比特流和 FSBL (Zynq)，FSBL 和 PMUFW (ZynqMP)。
   - `2`: 仅引导 U-Boot。
   - `3`: 仅引导 Linux 内核。
 
-### 可选参数
+**可选参数**
 
 - **--boot-addr <BOOT_ADDR>**: 指定引导地址。
 - **--image <IMAGE>**: 指定要引导的镜像文件。
@@ -298,7 +298,7 @@ SPI-Flash芯片数据读操作的相关内容。数据读操作，操作指令�
 - **--verbose**: 输出调试信息。
 - **--hw_server-url <URL>**: 指定硬件服务器的 URL，默认连接到本地服务器 (`localhost:3121`)。
 
-### 使用示例
+**使用示例**
 
 1. **下载比特流和 FSBL**:
 
@@ -323,6 +323,85 @@ SPI-Flash芯片数据读操作的相关内容。数据读操作，操作指令�
    ```shell
    petalinux-boot --jtag --kernel --fpga --tcl mytcl
    ```
+
+
+
+## 下载指定文件
+
+如果您的设计包含 FPGA 配置，需要首先下载比特流到 FPGA。
+
+**命令：**
+
+```shell
+petalinux-boot --jtag --fpga
+```
+
+**说明：**
+
+- 该命令将在 FPGA 上配置位于 `<project-root>/images/linux/` 目录下的默认比特流文件（通常为 `*.bit` 文件）。
+
+**指定自定义比特流：**
+
+```shell
+petalinux-boot --jtag --bitstream path/to/your.bit
+```
+
+**说明：**
+
+- 使用 `--bitstream` 选项可以指定自定义的比特流文件路径。
+
+**步骤 2：加载 FSBL**
+
+FSBL 是系统引导的第一阶段，引导过程需要将 FSBL 加载到目标设备。
+
+**命令：**
+
+```shell
+petalinux-boot --jtag --u-boot
+```
+
+**说明：**
+
+- 该命令将加载 FSBL 和 U-Boot，FSBL 会初始化硬件并加载 U-Boot。
+
+**如果只想加载 FSBL：**
+
+```shell
+petalinux-boot --jtag --u-boot --fsbl path/to/your_fsbl.elf
+```
+
+**说明：**
+
+- 使用 `--fsbl` 选项可以指定自定义的 FSBL 文件。
+
+**步骤 3：加载 U-Boot 引导加载程序**
+
+U-Boot 是一个灵活的引导加载程序，负责加载并启动内核。
+
+**命令：**
+
+```shell
+petalinux-boot --jtag --u-boot
+```
+
+**说明：**
+
+- 该命令将在加载 FSBL 后继续加载 U-Boot。
+
+**步骤 4：启动内核并挂载根文件系统**
+
+**方法一：使用预构建的镜像**
+
+如果您已经有预构建的完整镜像，可以使用以下命令：
+
+```shell
+petalinux-boot --jtag --prebuilt 3
+```
+
+**说明：**
+
+- `--prebuilt 3` 表示加载预构建的内核和根文件系统。
+- 预构建的镜像通常位于 `<project-root>/pre-built/linux/images/` 目录。
 
 
 
