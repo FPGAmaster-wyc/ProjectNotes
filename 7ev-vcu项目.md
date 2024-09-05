@@ -155,7 +155,7 @@ petalinux-package --bsp -p ./VCU/ --hwsource ./VCU/vcu.xsa --output 7ev-vcu --fo
 ```shell
 ## 添加指令
 setenv my_emmc_boot "mmc dev 0:1 && load mmc 0:1 0x10000000 /image.ub && bootm 0x10000000"
-setenv my_emmc_boot "mmc dev 0:1 && load mmc 0:1 0x10000000 /Image && bootm 0x10000000"
+setenv my_emmc_boot "mmc dev 0:1 && load mmc 0:1 0x10000000 /uImage && load mmc 0:1 0x20000000 system.dtb && bootm 0x10000000 - 0x20000000"
 
 ## 将bootcmd的命令修改成my_emmc_boot
 setenv bootcmd "run my_emmc_boot" 
@@ -172,7 +172,7 @@ saveenv
 
 BOOT.bin	（FLASH）
 
- image.ub 、system.dtb	（EMMC）
+ image.ub  或者 system.dtb和uImage	（EMMC）
 
 **说明**
 
@@ -200,6 +200,17 @@ sf write 0x10000000 0 ${filesize}
 
 ## 重新加载u-boot
 reset
+```
+
+**在linux进行更新**
+
+```shell
+## 更新BOOT.bin
+## 写入FLASH （包含擦除、写入、校验）  （校验出问题 应该没事）
+flashcp -v ./BOOT.BIN /dev/mtd0
+
+## 重启linux
+reboot
 ```
 
 

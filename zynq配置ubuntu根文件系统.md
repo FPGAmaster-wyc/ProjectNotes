@@ -4,7 +4,7 @@
 
 记住必须确认在命令petalinux-config的配置中，选择以SD卡启动，并正确填写rootfs的位置。我的SD卡为第二个设备，然后rootfs在其第二个分区，所以是mmcblk0p2
 
-```
+```shell
 → Image Packaging Configuration
 	→ Root filesystem type()
 
@@ -30,7 +30,7 @@
 sudo apt-get install qemu-user-static
 ```
 
-下载ubuntu20.04链接：https://pan.baidu.com/s/1oAh5H8gV27dc0UERFVeuPw?pwd=10gq 
+下载ubuntu20.04 base链接：https://cdimage.ubuntu.com/ubuntu-base/releases/
 
 解压根文件系统并放入SD卡的EXT4分区：
 
@@ -44,12 +44,30 @@ sudo chmod 755 /media/linuxusb/ROOT/
 
 
 
+
+
+清华源：https://mirrors.tuna.tsinghua.edu.cn/help/ubuntu-ports/
+
+
+
+
+
+安装必须包：
+
+```shell
+apt-get install sudo ssh net-tools ethtool
+```
+
+
+
+
+
 ## 导入PL端设备驱动
 
 此时的linux并没有包含PL端的设备驱动，需要把petalinux生成的rootfs里面的/lib文件夹内的内容，覆盖到ubuntu中
 
 ```shell
-sudo cp -rf ./lib/. /media/linuxusb/ROOT/lib/
+sudo cp -rf ./lib/module/. /media/linuxusb/ROOT/lib/module/
 ```
 
 
@@ -144,6 +162,14 @@ sudo apt-get update
 
 
 
+
+
+
+
+
+
+
+
 ## 修改主机名和提示
 
 **修改登录名：**
@@ -195,7 +221,9 @@ wget http://fishros.com/install -O fishros && . fishros
 
 
 
+# 总结
 
+此次配置未成功
 
 # 参考
 
@@ -203,7 +231,9 @@ wget http://fishros.com/install -O fishros && . fishros
 
 zynqMP搭载ubuntu：https://blog.csdn.net/Markus_xu/article/details/117020452
 
+zynq搭载ubuntu:https://www.lh123lh.gq/2019/03/11/ZYNQ%E7%A7%BB%E6%A4%8Dubuntu_18-04/
 
+arm64野火教程：https://doc.embedfire.com/linux/rk356x/build_and_deploy/zh/latest/building_image/ubuntu_rootfs/ubuntu_rootfs.html
 
 
 
