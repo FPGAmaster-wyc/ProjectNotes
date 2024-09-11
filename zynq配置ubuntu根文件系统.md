@@ -58,7 +58,7 @@ deb http://ports.ubuntu.com/ubuntu-ports/ jammy-security main restricted univers
 
 
 
-**挂载根文件系统**
+### **挂载根文件系统**
 
 首先编写挂载脚本 mount.sh，用于挂载根文件系统运行所需要的设备和目录。
 
@@ -113,14 +113,14 @@ sudo chroot ./ubuntu/
 ./mount.sh -u ./ubuntu/
 ```
 
-**安装必须包**
+### **安装必须包**
 
 ```shell
 apt-get update
 apt-get install sudo ssh net-tools ethtool vim openssh-server tzdata iputils-ping resolvconf ifupdown iproute2 -y
 ```
 
-**用户设置**
+### **用户设置**
 
 添加用户
 
@@ -162,7 +162,7 @@ dpkg-reconfigure resolvconf
 dpkg-reconfigure tzdata
 ```
 
-**配置串口调试服务**
+### **配置串口调试服务**
 
 ```shell
 ## 如果没有/etc/init/ttyPS0.conf，则自行创建
@@ -176,11 +176,9 @@ exec /sbin/getty -L 115200 ttyPS0 vt102
 
 ## 建立一个软连接
 ln -s /lib/systemd/system/getty@.service /etc/systemd/system/getty.target.wants/getty@ttyPS0.service
-
-
 ```
 
-**配置网络**
+### **配置网络**
 
 ```shell
 ## 创建并打开`/etc/network/interfaces`文件   （必须安装ethtool）
@@ -214,7 +212,7 @@ vim /lib/systemd/system/networking.service
 TimeoutStartSec=30sec
 ```
 
-**清除缓存**
+### **清除缓存**
 
 ```shell
 ## 清理APT缓存
@@ -226,7 +224,7 @@ sudo apt-get autoremove
 
 
 
-**压缩根文件系统**
+### **压缩根文件系统**
 
 把生成的根文件系统，压缩为.tar.gz的压缩包
 
@@ -235,6 +233,27 @@ sudo tar -zcvf ubuntu22.04-arm-zynq.tar.gz -C ./ubuntu/ .
 ```
 
 
+
+
+
+### **额外功能**
+
+指令tab补全
+
+```shell
+## 安装bash-completion
+sudo apt install bash-completion
+
+## 启用 bash-completion
+vim ~/.bashrc
+
+if [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+fi
+
+## 重新加载 .bashrc 配置文件
+source ~/.bashrc
+```
 
 
 
@@ -275,7 +294,7 @@ sudo cp -rf ./lib/firmware/ /media/linuxusb/ROOT/lib/
 
 
 
-## 启动并配置
+
 
 **网络配置**
 
@@ -315,62 +334,6 @@ sudo reboot
 
 
 
-## 换源：
-
-**第一步：备份源文件：**
-
-```shell
-sudo cp /etc/apt/sources.list /etc/apt/sources.list.backup
-```
-
-**第二步：编辑/etc/apt/sources.list文件**
-
-在文件最前面添加以下条目(操作前请做好相应备份)：
-
-```shell
-sudo vi /etc/apt/sources.list
-
-## :%d 删除所以内容
-
-## 换源的时候一定要注意，对于嵌入式板子来说，必须使用 ubuntu-ports/ 的源，而PC机使用ubuntu的源
-
-## 中科大20.04源（最稳定arm）
-deb https://mirrors.ustc.edu.cn/ubuntu-ports/ focal main restricted universe multiverse
-deb https://mirrors.ustc.edu.cn/ubuntu-ports/ focal-updates main restricted universe multiverse
-deb https://mirrors.ustc.edu.cn/ubuntu-ports/ focal-backports main restricted universe multiverse
-deb https://mirrors.ustc.edu.cn/ubuntu-ports/ focal-security main restricted universe multiverse
-
-## 清华源 20.04
-# 20.04 LTS
-# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ focal main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ focal-updates main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ focal-backports main restricted universe multiverse
-deb http://ports.ubuntu.com/ubuntu-ports/ focal-security main restricted universe multiverse
-
-## 清华 22.04
-# 22.04 LTS
-# 默认注释了源码镜像以提高 apt update 速度，如有需要可自行取消注释
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-updates main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ jammy-backports main restricted universe multiverse
-deb http://ports.ubuntu.com/ubuntu-ports/ jammy-security main restricted universe multiverse
-```
-
-**第三部：更新**
-
-```shell
-sudo apt-get update
-```
-
-
-
-
-
-
-
-
-
 
 
 ## 修改主机名和提示
@@ -393,30 +356,6 @@ sudo /etc/hosts
 ```shell
 sudo vim /etc/issue
 ```
-
-
-
-## 添加用户
-
-需要添加一个user用户，密码password
-
-```shell
-## 添加用户user （在root用户）
-sudo adduser user
-
-## 给user root权限
-sudo usermod -aG sudo user
-```
-
-
-
-## 切换到root用户
-
-```shell
-sudo su
-```
-
-
 
 
 
