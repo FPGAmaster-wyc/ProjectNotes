@@ -32,6 +32,8 @@ sudo apt-get install qemu-user-static
 
 下载ubuntu22.04 base链接：https://mirrors.bfsu.edu.cn/ubuntu-cdimage/ubuntu-base/releases/22.04.4/release/
 
+​	https://cdimage.ubuntu.com/ubuntu-base/releases/22.04.4/release/
+
 ```shell
 sudo tar -xvf ubuntu-base-22.04.4-base-armhf.tar.gz
 # 配置网络，复制本机 resolv.conf 文件
@@ -50,6 +52,12 @@ deb http://mirrors.bfsu.edu.cn/ubuntu-ports/ jammy main restricted universe mult
 deb http://mirrors.bfsu.edu.cn/ubuntu-ports/ jammy-updates main restricted universe multiverse
 deb http://mirrors.bfsu.edu.cn/ubuntu-ports/ jammy-backports main restricted universe multiverse
 deb http://ports.ubuntu.com/ubuntu-ports/ jammy-security main restricted universe multiverse
+
+## 清华源
+deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ noble main restricted universe multiverse
+deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ noble-updates main restricted universe multiverse
+deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu-ports/ noble-backports main restricted universe multiverse
+deb http://ports.ubuntu.com/ubuntu-ports/ noble-security main restricted universe multiverse
 ```
 
 **注：**清华源镜像：https://mirrors.tuna.tsinghua.edu.cn/help/ubuntu-ports/
@@ -117,7 +125,7 @@ sudo chroot ./ubuntu/
 
 ```shell
 apt-get update
-apt-get install sudo ssh net-tools ethtool vim openssh-server tzdata iputils-ping resolvconf ifupdown iproute2 -y
+apt-get install sudo ssh net-tools ethtool vim openssh-server tzdata iputils-ping ifupdown iproute2 -y
 ```
 
 ### **用户设置**
@@ -126,7 +134,7 @@ apt-get install sudo ssh net-tools ethtool vim openssh-server tzdata iputils-pin
 
 ```shell
 # 根据提示设置密码
-adduser xxx
+adduser user
 ```
 
 修改/etc/sudoers里面的内容，在root行下加上这句，然后你创建的用户就可以用sudo获得root权限了。
@@ -150,10 +158,22 @@ echo "127.0.0.1 ubuntu-arm-zynq">>/etc/hosts
 echo "127.0.0.1 localhost ubuntu-arm-zynq" >> /etc/hosts
 ```
 
-**允许自动更新DNS**
+### **DNS配置问题**
+
+如果出现apt-get update报错误，需要手动修改DNS配置
 
 ```shell
+## 手动更新
+sudo vim /etc/resolv.conf
+
+## 添加 DNS 服务器地址
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+
+## 自动 
 dpkg-reconfigure resolvconf
+## 卸载
+sudo apt-get remove resolvconf
 ```
 
 **设置时区**
@@ -197,9 +217,9 @@ iface eth0 inet dhcp
 # 2、获取静态配置： 
 auto eth0 
 iface eth0 inet static 
-address 192.168.0.1 
+address 192.168.3.124 
 netmask 255.255.255.0 
-gateway 192.168.0.1 
+gateway 192.168.3.1 
 ```
 
 实际测试中网口必须接入网线系统才能正常启动，就是在不联网的情况下，每次开机都要等待很久，卡在网络连接上5分钟。
@@ -216,10 +236,10 @@ TimeoutStartSec=30sec
 
 ```shell
 ## 清理APT缓存
-sudo apt-get clean
+apt-get clean
 
 ## 自动清理无用的依赖项
-sudo apt-get autoremove
+apt-get autoremove
 ```
 
 
@@ -238,7 +258,7 @@ sudo tar -zcvf ubuntu22.04-arm-zynq.tar.gz -C ./ubuntu/ .
 
 ### **额外功能**
 
-指令tab补全
+指令tab补全 （需要在开发板操作）
 
 ```shell
 ## 安装bash-completion
