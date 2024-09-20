@@ -427,7 +427,7 @@ petalinux-boot --jtag --prebuilt 3
 
 在libero使用在线逻辑分析：https://www.freesion.com/article/5826961757/
 
-
+读写flash：https://doc.embedfire.com/fpga/altera/ep4ce10_pro/zh/latest/code/spi_flash.html
 
 
 

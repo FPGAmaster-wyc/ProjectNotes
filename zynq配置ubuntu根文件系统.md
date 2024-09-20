@@ -200,6 +200,8 @@ ln -s /lib/systemd/system/getty@.service /etc/systemd/system/getty.target.wants/
 
 ### **配置网络**
 
+**network服务**
+
 ```shell
 ## 创建并打开`/etc/network/interfaces`文件   （必须安装ethtool）
 vim /etc/network/interfaces
@@ -221,6 +223,41 @@ address 192.168.3.124
 netmask 255.255.255.0 
 gateway 192.168.3.1 
 ```
+
+**netplan服务**
+
+```shell
+sudo vi /etc/netplan/networkmanager.yaml
+
+## 放入以下内容（注意缩进保持下面不变）（自动获取ip）
+network:
+    version: 2
+    renderer: NetworkManager
+## 固定IP
+network:
+  version: 2
+  ethernets:
+    eth0:
+      addresses:
+        - 192.168.1.100/24
+      gateway4: 192.168.1.1
+      nameservers:
+        addresses:
+          - 8.8.8.8
+          - 8.8.4.4
+```
+
+**然后启动配置并重启**
+
+```shell
+sudo netplan generate
+sudo netplan apply
+sudo reboot
+```
+
+现在，这将自动配置 ubuntu 网络设置。最后，您应该能够连接到网络/互联网
+
+
 
 实际测试中网口必须接入网线系统才能正常启动，就是在不联网的情况下，每次开机都要等待很久，卡在网络连接上5分钟。
 
@@ -301,6 +338,22 @@ source ~/.bashrc
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## 导入PL端设备驱动
 
 此时的linux并没有包含PL端的设备驱动，需要把petalinux生成的rootfs里面的/lib文件夹内的内容，覆盖到ubuntu中
@@ -311,46 +364,6 @@ source ~/.bashrc
 sudo cp -rf ./lib/module/. /media/linuxusb/ROOT/lib/module/
 sudo cp -rf ./lib/firmware/ /media/linuxusb/ROOT/lib/
 ```
-
-
-
-
-
-**网络配置**
-
-启动后，以太网无法自行连接到网络。相反，它需要一些配置才能正常工作。如果您发现自己处于断开连接的情况，请执行以下步骤。
-
-```shell
-sudo vi /etc/netplan/networkmanager.yaml
-
-## 放入以下内容（注意缩进保持下面不变）（自动获取ip）
-network:
-    version: 2
-    renderer: NetworkManager
-## 固定IP
-network:
-  version: 2
-  ethernets:
-    eth0:
-      addresses:
-        - 192.168.1.100/24
-      gateway4: 192.168.1.1
-      nameservers:
-        addresses:
-          - 8.8.8.8
-          - 8.8.4.4
-
-```
-
-**然后启动配置并重启**
-
-```shell
-sudo netplan generate
-sudo netplan apply
-sudo reboot
-```
-
-现在，这将自动配置 ubuntu 网络设置。最后，您应该能够连接到网络/互联网
 
 
 
