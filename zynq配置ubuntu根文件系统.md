@@ -289,7 +289,11 @@ apt-get autoremove
 sudo tar -zcvf ubuntu22.04-arm-zynq.tar.gz -C ./ubuntu/ .
 ```
 
+解压根文件系统到SD
 
+```shell
+sudo tar -zxvf ubuntu.tar,gz -C /media/linuxusb/ROOT/
+```
 
 
 
@@ -314,9 +318,33 @@ source ~/.bashrc
 
 
 
+修改为中文语言
 
+1. 改成中文语言
 
+   1. 安装中文支持包
 
+      ```shell
+      sudo apt-get install language-pack-zh-hans
+      ```
+
+   2. 修改配置
+
+      ```shell
+      /etc/default/locale
+      ```
+
+      注释掉
+
+      ```shell
+      LANG=en_US.UTF-8
+      ```
+
+      ，添加
+
+      ```shell
+      LANG=zh_CN.UTF-8
+      ```
 
 
 
