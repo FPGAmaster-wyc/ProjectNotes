@@ -32,7 +32,7 @@ sudo apt-get install qemu-user-static
 
 下载ubuntu22.04 base链接：https://mirrors.bfsu.edu.cn/ubuntu-cdimage/ubuntu-base/releases/22.04.4/release/
 
-​	https://cdimage.ubuntu.com/ubuntu-base/releases/22.04.4/release/
+https://cdimage.ubuntu.com/ubuntu-base/releases/22.04.4/release/
 
 ```shell
 sudo tar -xvf ubuntu-base-22.04.4-base-armhf.tar.gz

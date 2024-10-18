@@ -114,7 +114,7 @@ EXT4：解压rootfs.tar.gz
 ./scripts/bootstrap
 ```
 
-编译xenomai，其中编译器指定为aarch64-linux-gnu-gcc， 链接器指定为aarch64-linux-gnu-ld。
+编译xenomai，
 
 ```shell
 ./configure CFLAGS="-march=armv7-a -mfpu=vfp3 -mfloat-abi=hard" LDFLAGS="-march=armv7-a" --build=i686-pc-linux-gnu --host=arm-none-linux-gnueabi --with-core=cobalt --enable-smp --enable-tls CC=arm-linux-gnueabihf-gcc LD=arm-linux-gnueabihf-ld
