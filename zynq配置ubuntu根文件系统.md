@@ -257,8 +257,6 @@ sudo reboot
 
 现在，这将自动配置 ubuntu 网络设置。最后，您应该能够连接到网络/互联网
 
-
-
 实际测试中网口必须接入网线系统才能正常启动，就是在不联网的情况下，每次开机都要等待很久，卡在网络连接上5分钟。
 
 ```shell
@@ -268,6 +266,69 @@ vim /lib/systemd/system/networking.service
 
 TimeoutStartSec=30sec
 ```
+
+
+
+### **安装 TFTP 服务**
+
+**1、安装 TFTP 和 TFTP-HPA 服务**
+
+在终端中输入以下命令来安装 TFTP 服务器和 TFTP-HPA：
+
+```shell
+sudo apt update
+sudo apt install tftp-hpa tftpd-hpa
+```
+
+**2、配置tftp服务**
+
+安装完成后，需要修改 TFTP 的配置文件 `/etc/default/tftpd-hpa`，以确保 TFTP 服务器正确配置。使用以下命令编辑该文件：
+
+```shell
+sudo vim /etc/default/tftpd-hpa
+
+## 编辑文件，将内容修改为如下所示：
+# /etc/default/tftpd-hpa
+TFTP_USERNAME="tftp"
+TFTP_DIRECTORY="/srv/tftp"
+TFTP_ADDRESS="0.0.0.0:69"
+TFTP_OPTIONS="--secure"
+
+## TFTP_DIRECTORY 是 TFTP 服务器使用的根目录，默认可以设置为 /srv/tftp。
+## TFTP_ADDRESS 指定 TFTP 服务器监听的地址和端口，0.0.0.0:69 表示监听所有 IP 地址的 69 端口。
+```
+
+**3、启动和启用 TFTP 服务**
+
+编辑和配置完成后，可以通过以下命令启动 TFTP 服务器：
+
+```shell
+sudo systemctl restart tftpd-hpa
+```
+
+如果需要设置 TFTP 服务器在开机时自动启动，使用以下命令：
+
+```shell
+sudo systemctl enable tftpd-hpa
+```
+
+**4、测试 TFTP 服务**
+
+可以使用 `tftp` 命令来测试服务器是否正常工作。例如，可以上传或下载一个测试文件：
+
+```shell
+# 连接 TFTP 服务器
+tftp 192.168.x.x
+tftp> put testfile
+tftp> get testfile
+
+# 退出TFTP服务器
+tftp> quit
+```
+
+确保 TFTP 服务器工作正常，并且可以从客户端上传和下载文件。
+
+
 
 ### **清除缓存**
 
@@ -281,9 +342,9 @@ apt-get autoremove
 
 
 
-### **压缩根文件系统**
+### **解压缩 rootf.tar.gz**
 
-把生成的根文件系统，压缩为.tar.gz的压缩包
+压缩为.tar.gz的压缩包
 
 ```shell
 sudo tar -zcvf ubuntu22.04-arm-zynq.tar.gz -C ./ubuntu/ .
