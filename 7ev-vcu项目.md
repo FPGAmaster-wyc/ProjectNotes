@@ -281,6 +281,13 @@ root    ALL=(ALL) ALL
 
 修改user目录下的.barch文件，把里面的内容取消注释掉
 
+**配置 Bash 或其他 shell**： 如果使用的是 Bash，可以通过编辑 `~/.bashrc` 或 `/etc/profile` 文件，添加以下内容来启用彩色输出：
+
+```shell
+# 启用 ls 彩色输出
+alias ls='ls --color=auto'
+```
+
 
 
 ## EMMC分区步骤

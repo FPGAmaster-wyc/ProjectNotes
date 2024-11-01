@@ -222,6 +222,7 @@ iface eth0 inet static
 address 192.168.3.124 
 netmask 255.255.255.0 
 gateway 192.168.3.1 
+hwaddress ether 00:11:22:33:44:55  # 设置新的 MAC 地址（不需要改 可以删除这一行）
 ```
 
 **netplan服务**
