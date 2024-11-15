@@ -1,6 +1,6 @@
 # zynq及zynqMP系列启动流程
 
-## 启动所需文件和顺序
+启动所需文件和顺序
 
 Boot ROM → **fsbl（fsbl.elf） → bitstream（system.bit）→ u-boot（u-boot.elf）** → bootscr（boot.scr）→ kernel（Image）→ device tree（system.dtb）→ rootfs 
 
@@ -24,7 +24,7 @@ Boot ROM → **fsbl（fsbl.elf） → bitstream（system.bit）→ u-boot（u-bo
 
 ​	rootfs ：根文件系统，包含了操作系统运行所需的文件和目录结构
 
-## 展开介绍
+展开介绍
 
 Zynq 是通过片上CPU完成对芯片的配置，也就是PS和PL的配置是通过 PS 处理器 ARM 核来实现的。需要注意的是，与传统的 Xilinx 7 系列 FPGA 芯片不同，Zynq 是不支持从 PL 端进行直接启动配置的，一定要通过 PS 部分来完成。
 
@@ -62,9 +62,9 @@ Zynq 的具体启动配置是分级进行的，一共可以分为3个阶段，�
 
 ![image-20240516160234318](./media/image-20240516160234318-1731317780334-10.png)
 
-# SD卡启动
+# 1、SD卡启动
 
-## 1、格式化SD卡分区
+**1、格式化SD卡分区**
 
 ​	把SD卡格式化为两个分区：
 
@@ -94,17 +94,17 @@ Zynq 的具体启动配置是分级进行的，一共可以分为3个阶段，�
 
 
 
-# 通过QSPI FLASH启动
+# 2、QSPI FLASH启动
 
 ​	**petalinux2021.2版本**
 
-## 1、分配FLASH内存
+**1、分配FLASH内存**
 
 ![image-20240515163312201](./media/image-20240515163312201-1731317784766-14.png)
 
 这里面的size，只是表示分区的存储大小，而不是起始地址
 
-## 2、修改kernel在FLASH的位置
+**2、修改kernel在FLASH的位置**
 
 petalinux-config→ u-boot Configuration→ u-boot script configuration→ QSPI/OSPI image offsets
 
@@ -112,7 +112,7 @@ petalinux-config→ u-boot Configuration→ u-boot script configuration→ QSPI/
 
 0x1940000：0x1900000 + 0x40000  （根据第一步分区，进行计算），表示kernel的起始地址
 
-## 3、配置boot.scr的地址
+**3、配置boot.scr的地址**
 
 petalinux-config -c u-boot → ARM architecture → Boot script offset
 
@@ -120,7 +120,7 @@ petalinux-config -c u-boot → ARM architecture → Boot script offset
 
 0x3240000：0x1900000 + 0x4000 + 0x1900000  ，表示boot.scr文件在FLASH中的位置
 
-## 4、打包生成BOOT.bin
+**4、打包生成BOOT.bin**
 
 根据上述设置好的地址，打包成BOOT.bin （包含bit文件）
 
@@ -147,7 +147,7 @@ petalinux-package --boot --force --format BIN --fsbl --fpga --pmufw --u-boot --k
 
 
 
-## 5、下板操作
+**5、下板操作**
 
 （1）首先用ramdisk版本，进入linux，把rootfs文件解压到emmc的ext4分区，（创建分区，参考petalinux_learning）
 
@@ -161,13 +161,11 @@ petalinux-package --boot --force --format BIN --fsbl --fpga --pmufw --u-boot --k
 
 ​	擦除指令：sf erase 0 0x4000000	// 64MB内存
 
-## 参考文献：
+**参考文献：**
 
 FLASH分区配置：https://support.xilinx.com/s/article/000033588?language=en_US
 
-
-
-# ramdisk启动（INITRAMFS）：
+# 3、ramdisk启动
 
 petalinux-config配置：
 
@@ -193,7 +191,7 @@ petalinux-package --boot --force --format BIN --fsbl --pmufw --u-boot --kernel i
 
 **说明：**此时的image.ub是包含了一个简单的根文件系统的，所以不需要再进行打包根文件系统
 
-# FLASH配合EMMC启动：
+# 4、FLASH  EMMC启动
 
 ramdisk启动一个最简单的系统（主要做mmc配置）：[ramdisk启动](#ramdisk启动（INITRAMFS）：)
 
@@ -265,3 +263,169 @@ saveenv
 ```
 
  重启开发板即可查看到，从emmc的FAT32分区中读取iamge.ub，从ext4分区读取rootfs
+
+
+
+
+
+# 5、JTAG启动petalinux
+
+`petalinux-boot` 是一个用于在硬件上加载和引导 PetaLinux 镜像的工具，支持 JTAG 和 QEMU 两种模式。常见的使用场景包括通过 JTAG 下载比特流到 FPGA，并加载 FSBL、PMUFW、U-Boot 或 Linux 内核等。
+
+**基本用法**
+
+- **--jtag | --qemu**: 必选参数，用于指定引导模式。`--jtag` 通过 JTAG 引导，`--qemu` 通过 QEMU 仿真引导。
+  - `1`: 下载 FPGA 比特流和 FSBL (Zynq)，FSBL 和 PMUFW (ZynqMP)。
+  - `2`: 仅引导 U-Boot。
+  - `3`: 仅引导 Linux 内核。
+
+**可选参数**
+
+- **--boot-addr <BOOT_ADDR>**: 指定引导地址。
+- **--image <IMAGE>**: 指定要引导的镜像文件。
+- **--pmufw [<PMUFW_ELF>]**: 指定 PMUFW 的路径，仅适用于 ZynqMP。也可以通过 `--pmufw no` 跳过加载 PMUFW。
+- **--u-boot**: 引导 U-Boot 镜像。如果指定了 `--kernel`，则 `--u-boot` 无效。
+- **--kernel**: 引导 Linux 内核镜像（zImage、Image 或 image.elf）。
+- **--fpga**: 下载并配置 FPGA 比特流。
+- **--bitstream <BITSTREAM>**: 使用指定的比特流文件配置 FPGA。
+- **--tcl <TCL_OUTPUT>**: 生成用于 XSDB 的 Tcl 脚本文件。
+- **--verbose**: 输出调试信息。
+- **--hw_server-url <URL>**: 指定硬件服务器的 URL，默认连接到本地服务器 (`localhost:3121`)。
+
+**使用示例**
+
+1. **下载比特流和 FSBL**:
+
+   ```shell
+   petalinux-boot --jtag --prebuilt 1
+   ```
+
+2. **引导 U-Boot**:
+
+   ```shell
+   petalinux-boot --jtag --prebuilt 2
+   ```
+
+3. **引导 Linux 内核**:
+
+   ```shell
+   petalinux-boot --jtag --prebuilt 3
+   ```
+
+4. **生成用于 XSDB 的 Tcl 脚本**:
+
+   ```shell
+   petalinux-boot --jtag --kernel --fpga --tcl mytcl
+   ```
+
+
+
+**下载指定文件**
+
+如果您的设计包含 FPGA 配置，需要首先下载比特流到 FPGA。
+
+**命令：**
+
+```shell
+petalinux-boot --jtag --fpga
+```
+
+**说明：**
+
+- 该命令将在 FPGA 上配置位于 `<project-root>/images/linux/` 目录下的默认比特流文件（通常为 `*.bit` 文件）。
+
+**指定自定义比特流：**
+
+```shell
+petalinux-boot --jtag --bitstream path/to/your.bit
+```
+
+**说明：**
+
+- 使用 `--bitstream` 选项可以指定自定义的比特流文件路径。
+
+**步骤 2：加载 FSBL**
+
+FSBL 是系统引导的第一阶段，引导过程需要将 FSBL 加载到目标设备。
+
+**命令：**
+
+```shell
+petalinux-boot --jtag --u-boot
+```
+
+**说明：**
+
+- 该命令将加载 FSBL 和 U-Boot，FSBL 会初始化硬件并加载 U-Boot。
+
+**如果只想加载 FSBL：**
+
+```shell
+petalinux-boot --jtag --u-boot --fsbl path/to/your_fsbl.elf
+```
+
+**说明：**
+
+- 使用 `--fsbl` 选项可以指定自定义的 FSBL 文件。
+
+**步骤 3：加载 U-Boot 引导加载程序**
+
+U-Boot 是一个灵活的引导加载程序，负责加载并启动内核。
+
+**命令：**
+
+```shell
+petalinux-boot --jtag --u-boot
+```
+
+**说明：**
+
+- 该命令将在加载 FSBL 后继续加载 U-Boot。
+
+**步骤 4：启动内核并挂载根文件系统**
+
+**方法一：使用预构建的镜像**
+
+如果您已经有预构建的完整镜像，可以使用以下命令：
+
+```shell
+petalinux-boot --jtag --prebuilt 3
+```
+
+**说明：**
+
+- `--prebuilt 3` 表示加载预构建的内核和根文件系统。
+- 预构建的镜像通常位于 `<project-root>/pre-built/linux/images/` 目录。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

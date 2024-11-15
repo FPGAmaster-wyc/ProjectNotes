@@ -45,3 +45,14 @@ chmod a+x ppetalinux-v2019.2-final-installer.run
 然后卸载
 
 sudo ./xsetup -b Uninstall
+
+# linux安装vivado
+
+linux安装vivado的时候需要提前安装好 ncurses库
+
+打开终端
+
+```shell
+sudo apt install libncurses5
+```
+
