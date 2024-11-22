@@ -56,3 +56,23 @@ linux安装vivado的时候需要提前安装好 ncurses库
 sudo apt install libncurses5
 ```
 
+
+
+# vivado远程下载程序
+
+**连接开发板的主机设置**
+
+打开vivado安装路径， {vivado安装路径}\bin\hw_server.bat
+
+**远程的主机设置**
+
+打开Hardware Target，
+
+选择Connect to Remote server，然后输入Host name：（目标主机ip），port：3121
+
+
+
+
+
+
+

@@ -310,3 +310,17 @@ https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18842262/Zynq+QSPI+Driver
 ## 4、rootfs大包内容
 
  /components/yocto/source/aarch64/layers/meta-petalinux/recipes-core/packagegroups/packagegroup-petalinux-gstreamer.bb  
+
+
+
+## 5、根文件系统彩色目录
+
+修改user目录下的.barch文件，把里面的内容取消注释掉
+
+**配置 Bash 或其他 shell**： 如果使用的是 Bash，可以通过编辑 `~/.bashrc` 或 `/etc/profile` 文件，添加以下内容来启用彩色输出：
+
+```shell
+# 启用 ls 彩色输出
+alias ls='ls --color=auto'
+```
+
