@@ -3,8 +3,8 @@
 ## 	1、创建petalinux工程
 
 ```shell
-## 创建一个名字为LED-ZYNQ的，ZYNQ模板的工程
-petalinux-create -t project - -template zynq -n LED-ZYNQ （通过hdf文件 模板zynqMP）  
+## 创建一个名字为LED-ZYNQ的，ZYNQ模板的工程 （通过hdf文件 模板zynqMP）  
+petalinux-create -t project --template zynq -n LED-ZYNQ 
 
 ##（通过bsp）
 petalinux-create -t project -s avnet-digilent-zedboard-v2018.3-final.bsp -n my_zed
@@ -16,7 +16,7 @@ petalinux-create -t project -s avnet-digilent-zedboard-v2018.3-final.bsp -n my_z
 
 ```shell
 ## （.xsa文件路径的上级目录）导入.xsa文件，.xsa文件位置在xsa文件夹里面
-petalinux-config - -get-hw-description /home/hwusr/test/
+petalinux-config --get-hw-description /home/hwusr/test/
 
 ## 如果想单独打开配置petalinux界面
 petalinux-config

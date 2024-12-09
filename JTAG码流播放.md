@@ -422,11 +422,13 @@ JTAG(Joint Test Action Group;联合测试行动小组)是一种国际标准测�
 JTAG接口包括以下几个信号：
 TMS（Test Mode Select）：用于设置测试模式和测试状态机的状态。通过 TMS 信号，可以控制 TAP 在不同的状态间相互转换。TMS 信号在 TCK 的上升沿有效。TMS 具有内部电阻式上拉，可在引脚未驱动时提供逻辑高。
 TCK（Test Clock）：用于提供时钟信号，控制测试状态机的运行。
-TDO（Test Data Out）：用于从测试状态机中输出数据。在 TCK 的下降沿有效。TDO具有内部电阻拉拔，如果引脚不活动，则提供逻辑高。
+TDO（Test Data Out）：q效。TDO具有内部电阻拉拔，如果引脚不活动，则提供逻辑高。
 TDI（Test Data Input）：用于向测试状态机输入数据。在 TCK 的上升沿有效。TDI 具有内部电阻拉拔，可在引脚未驱动时为系统提供高逻辑。
 TRST(Test Reset Input)： RST可以用来对TAP Controller进行复位(初始化)。不过这个信号接口在IEEE 1149.1标准里是可选的，并不是强制要求的。 因为通过 TMS 也可以对 TAP Controller 进行复位（初始化）
 
 ## TAP控制器状态机
+
+![image-20241205110903886](C:\Users\30401\AppData\Roaming\Typora\typora-user-images\image-20241205110903886.png)
 
 ![image-20241128112440237](./media/image-20241128112440237.png)
 
@@ -441,6 +443,76 @@ IR寄存器中的值被当成调试指令，芯片内部根据这些指令完成
 
 数据寄存器
 DR寄存器可以理解成为IR操作的数据。需要注意的是DR寄存器有很多，每个IR指令可以对应不同的DR。一个特殊的DR动作是，当TAP进入Test-Logic-Reset状态时，DR寄存器自动装入这个器件对应的ID，规定这是一个32位的值。这一状态的控制权比IR寄存器大。
+
+
+
+PS端 IR指令
+
+![image-20241205203820703](C:\Users\30401\AppData\Roaming\Typora\typora-user-images\image-20241205203820703.png)
+
+## JTAG加载PL程序
+
+主要根据UG470，来设计烧写PL端程序
+
+首先通过vivado生产.rbt文件（bit文件的阿斯克码文件）
+
+如何根据UG470的166页的时许，来配置SPI
+
+![image-20241204095809115](C:\Users\30401\AppData\Roaming\Typora\typora-user-images\image-20241204095809115.png)
+
+![image-20241204095818079](C:\Users\30401\AppData\Roaming\Typora\typora-user-images\image-20241204095818079.png)
+
+需要注意的是在加载zynq的时候，需要在IR寄存器中添加4位寄存器,
+
+组合顺序为：PS_IR[3:0] + PL_IR[5:0] 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
