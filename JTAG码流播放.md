@@ -428,7 +428,7 @@ TRST(Test Reset Input)： RST可以用来对TAP Controller进行复位(初始化
 
 ## TAP控制器状态机
 
-![image-20241205110903886](C:\Users\30401\AppData\Roaming\Typora\typora-user-images\image-20241205110903886.png)
+![image-20241211140846621](./media/image-20241211140846621.png)
 
 ![image-20241128112440237](./media/image-20241128112440237.png)
 
@@ -448,7 +448,7 @@ DR寄存器可以理解成为IR操作的数据。需要注意的是DR寄存器�
 
 PS端 IR指令
 
-![image-20241205203820703](C:\Users\30401\AppData\Roaming\Typora\typora-user-images\image-20241205203820703.png)
+![image-20241211141002220](./media/image-20241211141002220.png)
 
 ## JTAG加载PL程序
 
@@ -458,9 +458,11 @@ PS端 IR指令
 
 如何根据UG470的166页的时许，来配置SPI
 
-![image-20241204095809115](C:\Users\30401\AppData\Roaming\Typora\typora-user-images\image-20241204095809115.png)
+![image-20241211141056534](./media/image-20241211141056534.png)
 
-![image-20241204095818079](C:\Users\30401\AppData\Roaming\Typora\typora-user-images\image-20241204095818079.png)
+![image-20241211141109108](./media/image-20241211141109108.png)
+
+
 
 需要注意的是在加载zynq的时候，需要在IR寄存器中添加4位寄存器,
 
