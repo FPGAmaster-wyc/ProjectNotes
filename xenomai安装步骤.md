@@ -30,7 +30,7 @@ xenomai镜像下载：https://source.denx.de/Xenomai/xenomai
 
 ```shell
 wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.9.24.tar.xz
-tar -xvf linux-4.9.24.tar.xz
+sudo tar -xvf linux-4.9.24.tar.xz
 ```
 
 然后需要把zynq的配置文件放到linux系统里面 /linux-4.9.24/arch/arm/configs
@@ -44,7 +44,6 @@ zynq配置文件下载：https://wyc-yun.lanzn.com/iT5QV24ptesd
 进入补丁包下载目录，将其解压：
 
 ```shell
-$ cd /home/luo/linux
 $ bzip2 -d patch-4.19-dovetail1.patch.bz2
 ```
 
@@ -52,23 +51,25 @@ $ bzip2 -d patch-4.19-dovetail1.patch.bz2
 而后进入xenomai目录，打入补丁：
 
 ```shell
-./scripts/prepare-kernel.sh --arch=arm --ipipe=../ipipe-core-4.9.24-arm-2.patch --linux=../linux-4.9.24
+sudo ./scripts/prepare-kernel.sh --arch=arm --ipipe=../ipipe-core-4.9.24-arm-2.patch --linux=../linux-4.9.24
 
-./scripts/prepare-kernel.sh --arch=arm --dovetail=../patch-5.10.25-dovetail1.patch --linux=../linux-5.10.25/
+sudo ./scripts/prepare-kernel.sh --arch=arm --dovetail=../patch-5.10.25-dovetail1.patch --linux=../linux-5.10.25/
 ```
+
+打完补丁 需要看一下有没有报错或者警告
 
 ## 2、加载zynq配置文件
 
 切换到linux内核源码路径，然后输入下面指令加载zynq配置文件
 
 ```shell
-make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- xilinx_zynq_defconfig
+sudo make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- xilinx_zynq_defconfig
 ```
 
 ## 3、配置内核
 
 ```shell
-make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- menuconfig
+sudo make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- menuconfig
 ```
 
 需要关闭的有
@@ -87,13 +88,13 @@ Kernel Features  --->
 ## 4、编译内核
 
 ```shell
-make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- zImage
+sudo make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- zImage
 ```
 
 ## 5、修改内核文件格式为uImage
 
 ```shell
-mkimage -A arm -O linux -T kernel -C none -a 0x00200000 -e 0x00200000 -n "Linux-4.9.24" -d arch/arm/boot/zImage arch/arm/boot/uImage
+sudo mkimage -A arm -O linux -T kernel -C none -a 0x00200000 -e 0x00200000 -n "Linux-4.9.24" -d arch/arm/boot/zImage arch/arm/boot/uImage
 ```
 
 ## 6、启动开发板
@@ -151,9 +152,17 @@ export PATH$PATH:/usr/xenomai/bin:/usr/xenomai/1ib/:/usr/xenomai/sbin
 source /etc/profile
 ```
 
+## 9、移动Xenomai lib的路径
+
+把usr/xenomai/lib 下的所有文件移动到 /usr/lib
 
 
-## 9、 测试
+
+
+
+
+
+## 10、 测试
 
 ### 对实时内核进行自动调优
 
