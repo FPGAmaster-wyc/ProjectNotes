@@ -397,13 +397,137 @@ petalinux-boot --jtag --prebuilt 3
 - `--prebuilt 3` 表示加载预构建的内核和根文件系统。
 - 预构建的镜像通常位于 `<project-root>/pre-built/linux/images/` 目录。
 
+# 6、通过QEMU仿真
+
+**1、生成镜像**
+
+通过BSP生成petalinux镜像文件
+
+**2、生成BOOT.bin**
+
+```shell
+petalinux packge –boot
+```
+
+**3、启动镜像**
+
+启动内核kernel（相当于启动zImage文件）
+
+```shell
+$ petalinux-boot --qemu –kernel
+```
+
+启动指定的zImage文件
+
+```shell
+$ petalinux-boot --qemu --image ./images/linux/zImage
+```
+
+**4、退出QEMU**
+
+若要退出 QEMU， 同时按下 “Ctrl+A” ， 然后按下 “X” 。
 
 
 
+# 7、tftp启动image.ub
+
+**1、安装tftp服务器**
+
+**安装服务器**
+
+```shell
+sudo apt-get install tftpd-hpa
+```
+
+**配置**
+
+```shell
+sudo vim /etc/default/tftpd-hpa
+```
+
+TFTP_USERNAME="tftp"  
+TFTP_DIRECTORY="/tftpboot"
+
+TFTP_ADDRESS="0.0.0.0:69"  
+​TFTP_OPTIONS="-l -c -s"
+
+**在根目录创建一个tftpboot目录，并赋予权限**
+
+```shell
+sudo mkdir /tftpboot
+
+sudo chmod 777 /tftpboot
+```
+
+**重启网络服务**
+
+```shell
+sudo service tftpd-hpa restart
+```
+
+**2、安装客户端**
+
+**安装客户端**
+
+```shell
+sudo apt-get install xinetd
+
+sudo apt-get install tftp-hpa
+```
+
+**配置**
+
+\$ vim /etc/xinetd.d/tftp
+
+```shell
+    service tftp
+
+    {
+
+    socket_type = dgram
+
+    protocol = udp
+
+    wait = yes
+
+    user = peta18
+
+    server = /usr/sbin/in.tftpd
+
+    server_args = -s /tftpboot
+
+    disable = no
+
+    per_source = 11
+
+    cps = 100 2
+
+    flags = IPv4
+
+    }
+```
+
+**重启tftp服务**
+
+```shell
+sudo vsudo service xinetd restart
+```
 
 
 
+## 3、配置petalinux
 
+​	\$ petalinux-config 进入Image Packaging Configuration
+
+![](./media/62123876b7bc80b8c496d73bdcfbf25c-1736130404732-1.png)
+
+## 4、构建系统镜像
+
+​	1、把image.ub放到/tftpboot目录下
+
+​	2、把rootfs.tar.gz解压到/home/peta18/share
+
+​	这样就实现了从NFS启动rootfs，从TFTP启动image.ub，SD卡只需要存放BOOT.bin文件即可，然后输入命令run netboot即可加载tftp下的image.ub和nfs下的rootfs
 
 
 

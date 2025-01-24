@@ -197,16 +197,28 @@ xenomai运行需要root权限，因为我是通过root用户登录的，故执�
 还要给latency添加权限
 
 ```shell
-cd /usr/xenomai/bin 
-sudo chmod 777 ./latency
-sudo ./latency
+root@xilinx-zc706-2021_2:/usr/xenomai/bin# ./latency
+== Sampling period: 1000 us
+== Test mode: periodic user-mode task
+== All results in microseconds
+warming up...
+RTT|  00:00:01  (periodic user-mode task, 1000 us period, priority 99)
+RTH|----lat min|----lat avg|----lat max|-overrun|---msw|---lat best|--lat worst
+RTD|      1.146|      1.944|      7.360|       0|     0|      1.146|      7.360
+RTD|      1.142|      1.978|      7.174|       0|     0|      1.142|      7.360
+RTD|      0.749|      1.958|      8.090|       0|     0|      0.749|      8.090
+RTD|      1.081|      1.937|      6.102|       0|     0|      0.749|      8.090
+RTD|      1.140|      2.015|      9.231|       0|     0|      0.749|      9.231
+RTD|      1.096|      1.928|      8.161|       0|     0|      0.749|      9.231
+RTD|      1.102|      1.909|      6.553|       0|     0|      0.749|      9.231
+RTD|      1.181|      2.018|      9.829|       0|     0|      0.749|      9.829
+RTD|      1.162|      1.887|      6.222|       0|     0|      0.749|      9.829
+
 ```
 
 **说明**
 
-说明：
-
-latency 工具用于测量 Xenomai 实时内核的延迟性能。
+latency 工具用于测量 Xenomai 实时内核的延迟性能。（从任务中断发起到处理）
 
 采样周期设置为 1000 微秒
 

@@ -137,6 +137,12 @@ setenv my_emmc_bit "mmc dev 0:1 && load mmc 0:1 0x10000000 system.bit && fpga lo
 
 
 
+# 加载PL端bit文件
+
+```shell
+ fpga loadb 0 0x10000000 ${filesize}
+```
+
 
 
 # 指令查询和添加：
