@@ -147,6 +147,12 @@ petalinux-package --bsp -p ./my-zed/ --output my-bsp
 petalinux-package --bsp -p ./my-zed/ --hwsource ./design_1_wrapper.hdf --output HW_BPS
 ```
 
+
+
+## 7、清除生成的文件（导入xsa之前可以清除一下）
+
+petalinux-build -x mrproper -f	
+
 # petalinux根文件系统
 
 ## 1、设置固态网络IP

@@ -1,0 +1,21 @@
+ethaddr=00:0a:35:00:22:08
+serverip=192.168.0.203
+ipaddr=192.168.0.13
+#baudrate=115200
+pl_img=top.bit
+kernel_img=Image
+dtb_img=system.dtb
+sdbootdev=0
+partid=1
+kernelsize=0x1b00000
+kernelstart=0x500000
+flash_load_kernel=sf probe 0 && sf read ${netstart} ${kernelstart} ${kernelsize}
+fallback_bootcmd=run flash_load_kernel && bootm ${netstart}
+sd_bit_existence_test=test -e mmc $sdbootdev:$partid $pl_img
+sd_load_pl=if run sd_bit_existence_test; then load mmc $sdbootdev:$partid ${clobstart} ${pl_img}; fpga loadb 0 $fileaddr $filesize; fi;
+sd_load_kernel=load mmc $sdbootdev:$partid ${netstart} ${kernel_img}
+sd_load_dtb=load mmc $sdbootdev:$partid ${dtbnetstart} ${dtb_img}
+bootargs=root=/dev/mmcblk0p2 rw rootwait
+second_bootcmd=run sd_load_pl; run sd_load_kernel; run sd_load_dtb; booti ${netstart} - ${dtbnetstart}; echo Boot failure. Using backup image; run fallback_bootcmd
+uenvcmd=run second_bootcmd
+

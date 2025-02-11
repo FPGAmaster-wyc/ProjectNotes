@@ -105,16 +105,9 @@ load usb 0 0x10000000 system.bit
 
 
 
-# u-boot中网络变量设置
 
-```shell
-setenv ipaddr 192.168.1.105         //开发板 IP 地址
-setenv ethaddr 00:02:9a:01:d1:31    //开发板网卡 MAC 地址
-setenv gatewayip 192.168.1.1        //开发板默认网关
-setenv netmask 255.255.255.0        //开发板子网掩码
-setenv serverip 192.168.1.103       //服务器地址，也就是 Ubuntu 地址
-saveenv                             //保存环境变量
-```
+
+
 
 
 
@@ -143,12 +136,6 @@ setenv my_emmc_bit "mmc dev 0:1 && load mmc 0:1 0x10000000 system.bit && fpga lo
 说明：loadb是加载的.bit，如果改为load 就代表加载.bin文件
 
 
-
-# 加载PL端bit文件
-
-```shell
- fpga loadb 0 0x10000000 ${filesize}
-```
 
 
 
