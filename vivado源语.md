@@ -32,10 +32,38 @@ connect_debug_port dbg_hub/clk [get_nets lvds_clk] （lvds_clk需要修改为你
 
 
 
+
+
+# XDC约束
+
+**设置端口的差分终端属性DIFF TERM**
+
+假如时钟信号和FPGA之间没有加入电阻，需要进行DIFF TERM，作用是启用差分终端电阻
+
+set_property DIFF_TERM <true> [get_ports <ports>]
+
+**启用差分终端：** 当你在 FPGA 中设计使用差分信号的接口时（例如 LVDS、TMDS 等），这些信号需要差分终端电阻来确保信号完整性，减少反射。使用 `set_property DIFF_TERM true` 可以在端口上启用这一特性。
+
+**改善信号质量：** 对于高速差分信号，启用差分终端可以优化信号传输，减少信号丢失和反射，保证信号到达接收端时的质量。
+
+
+
+
+
 # FLASH速度等级：
 
+```shell
 set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]
 set_property CONFIG_MODE SPIx4 [current_design]
+
+set_property CFGBVS VCCO [current_design]          #当 CFGBVS 连接至 Bank 0 的 VCCO 时，Bank 0 的 VCCO 必须为 2.5V 或 3.3V
+set_property CONFIG_VOLTAGE 3.3 [current_design]   #设置CONFIG_VOLTAGE 也要配置为3.3V
+set_property BITSTREAM.GENERAL.COMPRESS true [current_design]  #设置bit是否压缩
+set_property BITSTREAM.CONFIG.CONFIGRATE 33 [current_design]   #设置QSPI的加载时钟
+set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]  #设置QSPI的位宽
+set_property BITSTREAM.CONFIG.SPI_FALL_EDGE Yes [current_design]  #设置QPSI的数据加载时钟边沿
+set_property CONFIG_MODE SPIx4 [current_design]
+```
 
 **说明：**
 
