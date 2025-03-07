@@ -68,3 +68,33 @@ Tools -> Generate Memory Configuration File…
 
 
 
+# 修改fsbl源码强制为JTAG模式
+
+因为有时候zynq是QSPI启动的，但是切换为JTAG很麻烦，就需要借助外力来强制切换为JTAG启动模式（FSBL认为的，但实际上还是QSPI模式，只解决了烧写FLASH问题）
+
+**错误截图：**
+
+![image-20250304163516569](./media/image-20250304163516569.png)
+
+**解决：**
+
+通过SDK或者VITIS创建fsbl工程，在main.c代码中找到一下内容
+
+![image-20250304163646682](./media/image-20250304163646682.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

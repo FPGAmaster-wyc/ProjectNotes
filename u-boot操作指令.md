@@ -105,15 +105,27 @@ load usb 0 0x10000000 system.bit
 
 
 
-# u-boot中网络变量设置
+# 网络变量设置、TFTP服务
 
-```shell
-setenv ipaddr 192.168.1.105         //开发板 IP 地址
-setenv ethaddr 00:02:9a:01:d1:31    //开发板网卡 MAC 地址
-setenv gatewayip 192.168.1.1        //开发板默认网关
-setenv netmask 255.255.255.0        //开发板子网掩码
-setenv serverip 192.168.1.103       //服务器地址，也就是 Ubuntu 地址
-saveenv                             //保存环境变量
+```bash
+## 开发板 IP 地址
+setenv ipaddr 192.168.0.10
+# 开发板网卡 MAC 地址
+setenv ethaddr 00:02:9a:01:d1:31    
+# 开发板默认网关
+setenv gatewayip 192.168.1.1    
+# 开发板子网掩码
+setenv netmask 255.255.255.0        
+# 服务器地址，也就是 tftp发送端地址
+setenv serverip 192.168.0.19
+# 保存环境变量
+saveenv                             
+
+## 通过TFTP下载文件
+tftpboot 0x10000000 image.ub
+
+## 启动kernel
+bootm 0x10000000
 ```
 
 

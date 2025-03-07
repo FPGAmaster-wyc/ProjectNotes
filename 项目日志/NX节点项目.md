@@ -200,6 +200,8 @@ kill PID
 **客户端（Windows）**
 
 ```bash
+# 下载usbip工具
+https://github.com/cezanne/usbip-win/releases
 # 解压缩：usbip-win-0.3.6-dev.zip
 # 进入文件夹，然后再cmd打开
 # windows 初次运行需要执行安装命令：

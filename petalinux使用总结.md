@@ -216,6 +216,39 @@ ping www.baidu.com
 
 ## 2、设置开机自启脚本
 
+**添加开机自启动**
+
+```shell
+## 1、进入到/etc/init.d，创建脚本程序，并给权限
+cd /etc/init.d
+vim autorun.sh
+
+## 脚本内容开始
+#!/bin/bash
+
+function pppoe()
+{
+    udhcpc -i usb0  ## 替换为你想开机运行的指令
+    if [ $? -ne 0 ];
+    then
+        echo -e "\033[1;31m --------pppoe failed!--------\033[0m"  ## 失败时，打印的内容
+    else
+        echo "pppoe successfully!"	## 成功启动时，打印的内容
+    fi
+}
+
+pppoe
+## 脚本内容结束
+
+## 2、使脚本生效  99表示启动优先级（0-99），数字越大，脚本越晚执行
+update-rc.d autorun.sh defaults 99
+
+## 3、自启动选项移除
+update-rc.d -f autorun.sh remove
+```
+
+**其余方法（不推荐）**
+
 我们先在`/etc/init.d`目录下添加我们想开机自启动的脚本，我们将上面说的`cp /etc/resolvconf/resolv.conf.d/head /etc/resolv.conf `文件复制命令放在这个脚本中。
 
 ```shell
@@ -228,6 +261,8 @@ sudo chmod +x /etc/init.d/<your_startup_script>.sh
 ```shell
 ln -s /etc/init.d/<your_startup_script>.sh /etc/rcS.d/S99<your_startup_script>.sh
 ```
+
+
 
 还有一种每次进入终端就会执行一次脚本的方式，将写好的脚本（.sh文件）放到目录`/etc/profile.d/`下，进入终端后就会自动执行该目录下的所有shell脚本，要和上面的方式区分开，有的只需要开机启动一次的脚本就不需要用这种方式了。
 
