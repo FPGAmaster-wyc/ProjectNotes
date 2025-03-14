@@ -84,9 +84,22 @@ Tools -> Generate Memory Configuration File…
 
 
 
+# ubuntu没网
+
+Ubuntu上不了网：ifconfig查看只有lo,没有ens33问题解决参考方法
+
+重新配置并启动ens33网卡，这样就可以找到了
+
+```bash
+sudo dhclient ens33
+sudo ifconfig ens33
+```
 
 
 
+参考文献
+
+https://blog.csdn.net/qq_41969790/article/details/103222251?spm=1001.2014.3001.5506
 
 
 
