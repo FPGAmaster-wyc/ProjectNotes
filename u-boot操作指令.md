@@ -170,6 +170,8 @@ setenv my_emmc_bit "mmc dev 0:1 && load mmc 0:1 0x10000000 system.bit && fpga lo
 ## 查询启动内核指令：
 print bootcmd
 
+## 添加指令
+setenv my_emmc_bit "mmc dev 0:1 && load mmc 0:1 0x10000000 system.bit && fpga loadb 0 0x10000000 ${filesize}"
 ```
 
 

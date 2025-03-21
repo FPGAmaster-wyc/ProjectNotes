@@ -365,3 +365,41 @@ https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18842262/Zynq+QSPI+Driver
 alias ls='ls --color=auto'
 ```
 
+## 6、TFTP传输文件
+
+一般如果开发板不能连接网络，可以通过网线连接到笔记本，然后在笔记本创建一个tftp服务，然后在petalinux上通过tftp传输文加
+
+```bash
+tftp -g -r BOOT.bin 192.168.1.19
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
