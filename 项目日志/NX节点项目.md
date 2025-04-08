@@ -148,7 +148,7 @@ Aurora IP 配置信息如下
 
 配置介绍
 
-**服务端**
+**服务端**（orin）
 
 ```bash
 ## 安装usbip
@@ -371,6 +371,8 @@ init_calib_complete：内存控制器初始化是否完成的信号，为高（`
 
 **测试工程说明：**
 
+325T_DDR：通过vio控制读和写，写满DDR，然后再读DDR，然后进行对比，error表示对比错误，successful表示对比完成，且完全一致
+
 mig_7series_0_ex：使用PLL分频得到的时钟（记得给PLL输入时钟添加buff）
 
 mig_7series_2_ex：使用DDR专用时钟
@@ -405,7 +407,7 @@ zc706通过光纤发送测试数据给325T，325T接受后存到DDR，**测试�
 
 ## 测试FLASH
 
-FLASH可以烧写成功 并且校验正确，但是无法从FLASH启动
+FLASH可以烧写成功 并且校验正确
 
 测试工程："F:\my_work\NX_node\code\325T\FLASH_TEST"
 
@@ -481,15 +483,25 @@ zc706发送数据工程完成，"F:\my_work\NX_node\code\zc706\zc706_gtx2"
 
 ![96bb9bb7c8d1e41da6cd3028189b24d](./media/96bb9bb7c8d1e41da6cd3028189b24d.png)
 
+# 2025.3.24
+
+修改High Range Banks为50Ohms也不行
+
+![image-20250324151944335](./media/image-20250324151944335.png)
 
 
 
+# 2025.3.26
+
+测试光纤连接DDR程序，
+
+由zc706通过光纤发送数据，然后325T接收到之后，存到DDR
 
 
 
+# 2025.3.27
 
-
-
+## XDMA测试
 
 
 

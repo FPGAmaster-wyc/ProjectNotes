@@ -151,7 +151,11 @@ petalinux-package --bsp -p ./my-zed/ --hwsource ./design_1_wrapper.hdf --output 
 
 ## 7、清除生成的文件（导入xsa之前可以清除一下）
 
+```bash
 petalinux-build -x mrproper -f	
+```
+
+
 
 # petalinux根文件系统
 

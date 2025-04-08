@@ -339,7 +339,7 @@ fdisk /dev/mmcblk0
 
 5、记得格式化一下分区
 
-```shell
+```bash
 ## EXT4
 mkfs.ext4 /dev/mmcblk0p2
 
@@ -612,13 +612,13 @@ sudo rm /etc/resolv.conf
 
 创建指向 `/run/resolvconf/resolv.conf` 的符号链接：
 
-```shell
+```bash
 sudo ln -s /run/resolvconf/resolv.conf /etc/resolv.conf
 ```
 
 **重新启动网络服务**（或重启系统）以应用更改：
 
-```shell
+```bash
 sudo systemctl restart networking
 ```
 
