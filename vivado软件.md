@@ -103,7 +103,11 @@ https://blog.csdn.net/qq_41969790/article/details/103222251?spm=1001.2014.3001.5
 
 
 
+# modelsim关闭信号路径
 
+modelsim一键关闭信号路径
+
+![image-20250409144711786](./media/image-20250409144711786.png)![image-20250409144743098](./media/image-20250409144743098.png)
 
 
 

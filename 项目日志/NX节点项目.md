@@ -2,7 +2,7 @@
 
 **项目开始**
 
-开发板电源：12V 3A
+开发板电源：12V 3A（FPGA），42V 3A（Orin）
 
 验证k7开发板，是否能检测到芯片，通过xilinx下载器+下载夹
 
@@ -142,7 +142,7 @@ Aurora IP 配置信息如下
 
 # 2025.2.18
 
-## USBIP使用
+# USBIP使用
 
 使用USBIP对xilinx开发板，实现远程下载调试
 
@@ -413,7 +413,7 @@ FLASH可以烧写成功 并且校验正确
 
 
 
-去空天院开会：
+# 空天院开会内容
 
 科大 中科卫星（甲方）
 
@@ -450,6 +450,18 @@ Sar 开机 工作 告诉什么时候开始 什么时候结束  透传传输数�
 用户给某段数据进行回放，需要支持循环读取 
 
 只需要接受他们的反压 ，不需要给他们反压信号，把我们当做一个磁盘来用
+
+
+
+## 4.17内容更新
+
+从空天院那边来的数据，帧大小也不定长，总数据量也不定长
+
+
+
+发数据给空天院，就只需要把他当做一个FIFO，反压信号就相当 ~full信号，只要这个反压为1，就可以一直写，为0后，就不要写了
+
+
 
 # 2025.2.27
 
@@ -502,6 +514,128 @@ zc706发送数据工程完成，"F:\my_work\NX_node\code\zc706\zc706_gtx2"
 # 2025.3.27
 
 ## XDMA测试
+
+
+
+
+
+
+
+
+
+# 2025.4.8
+
+# 完整的设备测试XDMA
+
+### 启动下载FPGA
+
+```bash
+## 需要启动FPGA时，可通过以下命令执行
+sudo systemctl start fpga
+
+## 需要关闭FPGA电源时，通过以下命令
+sudo systemctl stop fpga
+
+## 查询是否启动FPGA
+sudo systemctl status fpga
+
+## 加载bit文件并运行的命令为
+sudo load_fpga <bitstream file name>
+
+
+```
+
+### 远程调试FPGA
+
+```bash
+## 启动remote-jtag服务，以支持上位机远程访问。
+sudo systemctl start remote-jtag
+
+## 调试结束时，可关闭remote-jtag服务，解除对JTAG接口的占用：
+sudo systemctl stop remote-jtag
+
+## 上位机端（Windows）
+## 以管理员运行CMD窗口
+## 查询orin上的usbip设备
+ ./usbip.exe list -r 192.168.1.151
+Exportable USB devices
+======================
+ - 192.168.1.151
+        1-3: Future Technology Devices International, Ltd : FT232H Single HS USB-UART/FIFO IC (0403:6014)
+           : /sys/devices/platform/bus@0/3610000.usb/usb1/1-3
+           : (Defined at Interface level) (00/00/00)
+           :  0 - Vendor Specific Class / Vendor Specific Subclass / Vendor Specific Protocol (ff/ff/ff)
+
+## 挂载设备到Windows
+./usbip attach -r 192.168.1.151 -b 1-3
+
+## 释放设备端口
+./usbip detach -p 0
+```
+
+### XDMA读写数据
+
+```bash
+## 从DDR 0地址读取2048个数据到data_rd.bin文件
+sudo ./dma_from_device -d /dev/xdma0_c2h_0 -a 0x00000000 -s 2048 -f data_rd.bin
+
+## 存储datafile4K.bin内的数据，到DDR，从0地址开始存储
+sudo ./dma_to_device -d /dev/xdma0_h2c_0 -a 0x00000000 -s 2048 -f datafile4K.bin
+```
+
+
+
+
+
+
+
+### 测试流程
+
+单独测试 xdma读写DDR  **没问题** ，功能为通过VIO触发读写，触发低有效，测试工程如下
+
+`"F:\my_work\NX_Aruora\code\325T\325T_DDR_XDMA"`
+
+单独测试 光纤 **没问题**，功能为：通过zc706发射光纤数据，进行收发测试，测试工程如下
+
+`"F:\my_work\NX_Aruora\code\325T\325T_gtx2"`
+
+`"F:\my_work\NX_Aruora\code\zc706\zc706_gtx2"`
+
+
+
+# 325T和zc706测试整体设计
+
+
+
+## 一、325T接收客户数据存到Orin磁盘
+
+此过程，采用zc706产生模拟数据，通过vio控制收发
+
+测试完成，利用linux程序进行接收，然后存成.bin文件，发现数据没问题，
+
+缺陷：linux程序，运行第一次，我发送数据，但是他收到第一针 就结束了，第二次运行就好了
+
+ 
+
+
+
+
+
+
+
+## 二、325T发送数据给客户，并受客户的反压信号控制
+
+接收Orin的数据，然后根据客户的反压信号，来判断是否通过光纤发给客户，要保证数据帧的完整性
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -120,6 +120,8 @@
 
 **例：**突发数据位宽为：64，即8个字节，则AxSIZE = 3'b011 
 
+但是在vivado开发中，AXI SmartConnect这个ip中，最低为32
+
 ![image-20241121115726732](./media/image-20241121115726732.png)
 
 ## 1.5 突发类型（Ax_BURST）
