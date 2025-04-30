@@ -7,6 +7,9 @@ set_property IOSTANDARD LVCMOS33 [get_ports UART_0_txd]
 ## 一个指令
 set_property -dict {PACKAGE_PIN R21 IOSTANDARD LVDS_25} [get_ports tx_frame_out_n]
 set_property -dict {PACKAGE_PIN N17 IOSTANDARD LVDS_25} [get_ports {tx_data_out_p[0]}]
+
+## 时钟约束
+create_clock -period 5.000 -name ddr_clk -waveform {0.000 2.500} [get_ports i_sys_clk_p]
 ```
 
 # 差分转单端

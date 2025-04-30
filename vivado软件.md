@@ -111,7 +111,13 @@ modelsim一键关闭信号路径
 
 
 
+# 更新powershell7
 
+在powershell7终端，输入以下命令进行更新
+
+```shell
+winget upgrade --id Microsoft.PowerShell --source winget
+```
 
 
 
