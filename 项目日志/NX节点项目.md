@@ -453,7 +453,7 @@ Sar 开机 工作 告诉什么时候开始 什么时候结束  透传传输数�
 
 
 
-## 4.17内容更新
+# 4.17内容更新
 
 从空天院那边来的数据，帧大小也不定长，总数据量也不定长
 
@@ -581,7 +581,25 @@ sudo ./dma_from_device -d /dev/xdma0_c2h_0 -a 0x00000000 -s 2048 -f data_rd.bin
 
 ## 存储datafile4K.bin内的数据，到DDR，从0地址开始存储
 sudo ./dma_to_device -d /dev/xdma0_h2c_0 -a 0x00000000 -s 2048 -f datafile4K.bin
+
+## 检查中断号
+cat /proc/interrupts | grep xdma
+285:   11197285          0          0          0          0          0          0          0   PCI-MSI 537395200 Edge      xdma
+## 解释
+285：中断号（IRQ 285）。
+8855271：该中断已触发的次数（说明 FPGA 已经成功发送了中断）。
+PCI-MSI 537395200 Edge：中断类型为 PCIe MSI（边缘触发）。
+
+xdma：驱动名称（Xilinx DMA 驱动）。
+
+## 查看中断的触发次数
+watch -n 1 "cat /proc/interrupts | grep xdma"
+
+## 查询寄存器状态
+ sudo ./test_udma 2> log.log
 ```
+
+
 
 
 
@@ -633,6 +651,126 @@ sudo ./dma_to_device -d /dev/xdma0_h2c_0 -a 0x00000000 -s 2048 -f datafile4K.bin
 
 
 
+# libudma使用说明
+
+## 编译
+
+编译程序要求计算机已安装gcc和make。
+
+在libudma代码路径下运行make命令，完成编译后将得到以下文件：
+
+* libudma.h 头文件
+* libudma.a 库文件
+* udma_write 发送测试程序
+* udma_read  接收测试程序
+
+## 使用测试例程
+
+### udma_write
+
+udma_write的功能是从文件读取数据，经libudma发送。其命令行调用方式为：
+
+```bash
+udma_write [-W <line size>] [-H <line count>] [-n <frame count>] [-v] [-h] <input file>
+    input file 输入数据文件。每帧数据包括W*H个字节，udma_write从输入文件中逐帧读取数据并发送。如果文件末尾的数据不足一帧，将会以0xAA补齐。
+    -W line size 每行数据的字节数，默认为65536。这个参数将会传递给硬件的TX_WIDTH寄存器。
+    -H line count 数据行数，默认为1。这个参数将会传递给硬件的TX_HEIGHT寄存器。
+    -n frame count 要发送的数据帧数。如果frame count为0，则表示发送文件中的全部数据。如果不指定-n，默认发送全部数据。
+    -v 打印更多信息
+    -h 打印帮助信息
+```
+
+示例：
+
+```bash
+#生成随机测试数据，帧长65536，共1024帧
+dd if=/dev/urandom of=data.bin bs=65536 count=1024
+
+# 生成累加数
+dd if=<(awk 'BEGIN{for(i=0;i<65536;i++) printf "%c", i%256}') of=data.bin bs=65536 count=16
+
+#通过udma_write发送
+./udma_write -W65536 -v data.bin
+```
+
+### udma_read
+
+udma_read的功能是从libudma读取数据，并保存到文件。其命令行调用方式为：
+
+```bash
+udma_read [-W <line size>] [-H <line count>] [-n <frame count>] [-v] [-h] <output file>
+    output file 输出数据文件。
+    -W line size 每行数据的字节数，默认为65536。这个参数将会传递给硬件的RX_WIDTH寄存器。
+    -H line count 数据行数，默认为1。这个参数将会传递给硬件的RX_HEIGHT寄存器。
+    -n frame count 要接收的数据帧数。如果frame count为0，则表示连续接收并写入文件，直到用户输入ctrl-c退出。如果不指定-n, 默认连续接收。
+    -v 打印更多信息
+    -h 打印帮助信息
+```
+
+示例：
+
+```bash
+#接收1024帧数据，每帧大小65536字节
+./udma_read -W65536 -v output.bin
+#与输入文件比较
+cmp data.bin output.bin
+```
+
+### 同时运行udma_write和udma_read
+
+udma_write和udma_read支持同时运行，以便进行环回测试。
+一般来说，先启动udma_read，再启动udma_write，以免丢失开头的数据。
+
+
+
+对比两个文件内容：
+
+```bash
+# 使用cmp命令 （如果什么也没返回，代表完全一致）
+cmp data10000.bin output.bin
+```
+
+
+
+生成累加数：
+
+python代码：
+
+```python
+#!/usr/bin/env python3
+import sys
+
+# 固定帧大小为64KB
+frame_size = 64 * 1024  # 64KB = 65536 bytes
+num_per_frame = frame_size // 16  # 每个128位累加数占16字节，4096个数每帧
+
+# 从命令行参数获取帧数和文件名
+if len(sys.argv) != 3:
+    print("用法: sudo ./generate_bin.py <帧数> <文件名>")
+    sys.exit(1)
+
+num_frames = int(sys.argv[1])
+output_file = sys.argv[2]
+
+# 打开文件以二进制写入模式
+with open(output_file, "wb") as f:
+    # 从0开始累加
+    counter = 0
+    # 循环生成指定帧数
+    for _ in range(num_frames):
+        for _ in range(num_per_frame):
+            # 将累加数转换为16字节（128位）的二进制
+            counter_bytes = counter.to_bytes(16, byteorder='big')
+            f.write(counter_bytes)
+            counter += 1
+```
+
+生成指令：
+
+```bash
+## 生成10000帧数据 名字为data10000.bin
+sudo ./generate_bin.py 10000 data10000.bin
+```
 
 
 
@@ -640,6 +778,128 @@ sudo ./dma_to_device -d /dev/xdma0_h2c_0 -a 0x00000000 -s 2048 -f datafile4K.bin
 
 
 
+# 修复问题：
+
+axi_read的ip配置，改为256突发
+
+
+
+
+
+ 
+
+修改地址传递的问题，
+
+修了一下两个文件，axi read，axi write，config_file
+
+
+
+- [x] > 必须给 时钟加上约束，否则会导致数据出现问题
+  >
+  > 时序违规导致数据出现问题，
+  >
+  > 32位next地址，不管从高时钟还是低时钟，都要进行fifo跨时钟处理，否则会出现时序违规
+  >
+  > 
+
+
+
+只有第一帧会出错，如果连续发射10帧的话，第一帧出错 但是第二帧没问题
+
+
+
+问题：
+
+大量数据的时候，读到了未来地址的数据
+
+传输大文件的时候，接收到的数据不够，eg：发送1.9G数据，但是只收到1.4G
+
+第一帧 读取的是之前的数据，并不是新写进来的 （怀疑是软件初始化的H2C_RD_NEXT是0，而不是FPGA给的H2C_BUF_START）
+
+
+
+# 修改记录：
+
+
+
+添加
+
+```verilog
+reg addr_not_equal;
+always @(posedge i_clk or negedge i_rst_n) begin
+    if (~i_rst_n)
+        addr_not_equal <= 0;
+    else
+        addr_not_equal <= (H2C_RD_NEXT != H2C_WR_NEXT);
+end
+
+
+
+reg [31:0] H2C_WR_NEXT_reg, H2C_FRM_SIZE_reg;
+always @(posedge i_clk or negedge i_rst_n) begin
+    if (~i_rst_n) begin
+        H2C_WR_NEXT_reg <= 0;
+        H2C_FRM_SIZE_reg <= 0;
+    end else begin
+        H2C_WR_NEXT_reg <= H2C_WR_NEXT;
+        H2C_FRM_SIZE_reg <= H2C_FRM_SIZE;
+    end
+end
+```
+
+
+
+
+
+master：
+
+添加了next addr两级寄存器
+
+添加时钟约束
+
+
+
+deal ：
+
+- [x] 修改DDR输出时钟为200M
+
+添加read、write数据判断 是否连续
+
+read 的初始地址为0x1000000 
+
+- [x] 修改地址改变规则，不是一次突发改变一次，而是一帧改变一次
+
+
+
+- [x] 交换读写地址位置
+
+
+
+
+
+# 问题总结：
+
+- [x] 1、FPGA读取DDR的初始地址不要给DDR的中间值，而需要给0，写DDR的初始值可以是从中间开始，此问题可以解决第一帧丢失的问题
+
+- [x] 2、修改地址改变规则，不是一次突发改变一次，而是一帧改变一次，此问题可以修复中间数据错误的问题
+
+- [ ] 3、FPGA写数据追上软件读取的一圈，导致数据丢失
+- [x] 4、修改DDR输出时钟为200M，可以提升速度，但是本次没有修改，后续可以提升，OK版本，并没有提速，当前版本已经提速
+- [x] 5、提速后，只能传输9000帧数据
+
+
+
+问题截图：
+
+![image-20250515144145863](./media/image-20250515144145863.png)
+
+![image-20250515161547540](./media/image-20250515161547540.png)
+
+
+
+
+
+# 添加光口进行测试
 
 
 
