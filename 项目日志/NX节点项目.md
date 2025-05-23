@@ -727,7 +727,7 @@ udma_write和udma_read支持同时运行，以便进行环回测试。
 
 ```bash
 # 使用cmp命令 （如果什么也没返回，代表完全一致）
-cmp data10000.bin output.bin
+cmp data1024.bin output.bin
 ```
 
 
@@ -769,7 +769,7 @@ with open(output_file, "wb") as f:
 
 ```bash
 ## 生成10000帧数据 名字为data10000.bin
-sudo ./generate_bin.py 10000 data10000.bin
+sudo ./generate_bin.py 1024 data1024.bin
 ```
 
 
@@ -900,6 +900,34 @@ read 的初始地址为0x1000000
 
 
 # 添加光口进行测试
+
+noila版本：（主要测试修改Frame）
+
+添加了帧数自定义，使用vio
+
+重新定义了 ila，全部使用debug自动布线
+
+
+
+基础版本：（当前版本）
+
+pressure 通过vio输入，然后传输到axi read模块，通过这个反压信号和地址不相等，来判断是否进行数据读取，**测试完成没问题**
+
+全部修改为200M，读写，来自DDR的输出时钟，**测试完成没问题**
+
+添加了外部触发pressure**测试没问题**
+
+
+
+325T_XDMA_DDR_LOOP版本
+
+继续在DDR回环版本测试修改frame的大小，vio失败，输入数据传输不到axi lite
+
+选择在配置文件中修改固定值
+
+
+
+
 
 
 
