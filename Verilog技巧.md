@@ -32,3 +32,21 @@ wire key_release = key_out & ~key_out_dly;  // 检测上升沿
 wire key_pressed = ~key_out & key_out_dly;  // 检测下降沿
 ```
 
+
+
+
+
+
+
+# robei开发板资料
+
+1.在线培训：http://robei/com/read.php?id=155
+2.设计案例：http://robei.com/search.php
+3.课程培训：http://robei.com/read.php?id=133
+4.八角板：http：//robei.com/read.php?id=152
+5.《数字集成电路设计》：http://robei.com/read.php?id=139
+6.常见问题：http://robei.com/read.php?id=131
+7.注册码：http://robei.com/read.php?id=22
+8.实验箱：http://robei.com/read.php?id=157
+9.高端机器人平台：http://robei.com/read.php?id=156
+10.7天精英实训：http://robei.com/read.php?id=145 

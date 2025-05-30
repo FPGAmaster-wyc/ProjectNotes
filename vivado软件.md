@@ -121,3 +121,86 @@ winget upgrade --id Microsoft.PowerShell --source winget
 
 
 
+
+
+# 命令行下载zynq程序
+
+1、打开对应版本的Xilinx Software Command Line Tool命令行
+
+![image-20250530165334918](./media/image-20250530165334918.png)
+
+2、输入 connect 连接开发板
+
+![image-20250530165456443](./media/image-20250530165456443.png)
+
+3、输入 targets 查找器件
+
+![image-20250530165606459](./media/image-20250530165606459.png)
+
+可以看到能查到两大类器件：
+
+​	1：代表PS端 
+
+​		2：代表 ARM的0核
+
+​		3：代表 ARM的1核
+
+​	4：代表PL端
+
+4、输入 targets 4 选择器件，首先下载bit文件
+
+选择哪个器件之后，他的后面就会有一个星星  *
+
+![image-20250530170745268](./media/image-20250530170745268.png)
+
+5、加载bit文件 
+
+```bash
+fpga F:/PS_PL_RW_wrapper.bit
+```
+
+![image-20250530171038684](./media/image-20250530171038684.png)
+
+6、加载elf文件
+
+```bash
+# 首先切换到PS的ARM0器件：	
+targets 2
+
+#加载PS相关的初始化文件
+source ps7_init.tcl
+
+#然后初始化PS
+ps7_init
+
+# 加载elf文件
+dow ddr_rw.elf
+
+# 运行程序
+con 
+```
+
+![image-20250530172756154](./media/image-20250530172756154.png)
+
+7、其余命令
+
+```bash
+# 进行一些复位和初始化之类的操作
+ps7_init
+
+after 1000
+
+psu_ps_pl_isolation_removal
+
+after 1000
+
+psu_ps_pl_reset_config
+
+# 软复位命令
+rst -processor
+```
+
+
+
+
+
