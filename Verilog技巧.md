@@ -50,3 +50,34 @@ wire key_pressed = ~key_out & key_out_dly;  // 检测下降沿
 8.实验箱：http://robei.com/read.php?id=157
 9.高端机器人平台：http://robei.com/read.php?id=156
 10.7天精英实训：http://robei.com/read.php?id=145 
+
+
+
+# AXI开源设计
+
+国内网站 
+
+AXI
+
+https://gitcode.com/gh_mirrors/ve/verilog-axi?spm=1001.2101.3001.10289&isLogin=1
+
+PCIE
+
+https://gitcode.com/gh_mirrors/ve/verilog-pcie?spm=1001.2101.3001.10289&isLogin=1
+
+网络
+
+https://gitcode.com/gh_mirrors/ve/verilog-ethernet?spm=1001.2101.3001.10289&isLogin=1
+
+github网站（全）
+
+https://github.com/alexforencich?page=3&tab=repositories
+
+
+
+# AX301开发板资料
+
+https://github.com/dta0502/AX301
+
+
+
