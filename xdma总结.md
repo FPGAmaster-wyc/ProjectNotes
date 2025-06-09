@@ -6,9 +6,23 @@ XDMA IP配置
 
 ![image-20250508151638480](./media/image-20250508151638480.png)
 
-外部可以由按键进行触发16位
+**User Interrupts:**用户中断， XDMA提供16条中断线给用户逻辑， 这里面可以配置使用几条中断线。
+**Legacy Interrupt:**XDMA 支持 Legacy 中断,我们这么不选 （此中断会一直触发）
+**MSI Capabilities:**选择支持MSI中断 ,支持16个中断消息向量
+	注意： MSI 中断和 MSI-X 中断只能选择一个， 否则会报错， 如果选择了 MSI 中断， 则可以选择 Legacy 中断， 如果选择了 MSI-X 中断， 那么 MSI 必须取消选择， 同时 Legacy 也必须选择 None。 此 IP 对于 7 系列设置有这个问题， 如果使用 Ultrascale 系列， 则可以全部选择
+**MSI-X Capabilities:**不选
+**Miscellaneous:**选 Extended Tag Field
+**Link Status Register:**选 Enable Slot Clock Configuration  
 
-![image-20250508151717740](./media/image-20250508151717740.png)
+
+
+## xdma中断说明
+
+1)、 Legacy Interrupts：
+
+对于 Legacy Interrupts 中断， 当 user_irq_ack 第一次为 1 的时候 usr_irq_req 可以清 0， 当 user_irq_ack 第二次为 1，的时候， 可以重新设置 usr_irq_req 发起中断。
+
+外部可以由按键进行触发16位![image-20250508151717740](./media/image-20250508151717740.png)
 
 ## PC软件代码
 
