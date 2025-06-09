@@ -104,7 +104,18 @@ git restore file
 	eg：	git restore test.test
 ```
 
-# 7、其他
+# 7、丢弃本地工作区的修改
+
+```bash
+# 丢弃所有文件的修改
+git checkout -- .  
+# 或者只丢弃特定文件
+git checkout -- Makefile udma_read.c udma_write.c
+```
+
+
+
+# 其他
 
 ```shell
 ## 追加提交		
