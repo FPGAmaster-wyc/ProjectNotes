@@ -34,6 +34,38 @@ wire key_pressed = ~key_out & key_out_dly;  // 检测下降沿
 
 
 
+# 动态位宽选择
+
+- [基址 -: 宽度] 语法：Verilog中的动态位宽选择，用于从向量中提取固定宽度的位段，起始位动态计算，**向低位选择**。
+
+```verilog
+else if (cnt_4byte <= 2) begin
+    buffer8 <= buffer[23 - cnt_4byte * 8 -: 8];
+end
+
+//等同于
+
+case (cnt_4byte)
+    0: buffer8 <= buffer[23:16];
+    1: buffer8 <= buffer[15:8];
+    2: buffer8 <= buffer[7:0];
+    default: buffer8 <= buffer8;
+endcase
+```
+
+同样也有**向高位选择**的语法
+
+- [基址 +: 宽度] 向高位选择，适合从低位开始的索引。
+
+```verilog
+assign byte_out = buffer[index * 8 +: 8];
+
+/* 说明：
+如果 index = 0，选择 buffer[0 +: 8] = buffer[7:0]。
+如果 index = 1，选择 buffer[8 +: 8] = buffer[15:8]。
+*/
+```
+
 
 
 
@@ -80,4 +112,10 @@ https://github.com/alexforencich?page=3&tab=repositories
 https://github.com/dta0502/AX301
 
 
+
+
+
+# openFPGA仓库
+
+https://github.com/suisuisi?tab=repositories
 

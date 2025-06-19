@@ -204,6 +204,191 @@ sudo ./rescan_pcie.sh
 
 
 
+# Linux读写xdma
+
+## 安装xdma驱动（linux版）
+
+### 驱动下载
+
+可以从官方下载驱动，也可以从我这里下载我使用的版本
+
+官方驱动下载：[GitHub - Xilinx/dma_ip_drivers: Xilinx QDMA IP Drivers](https://github.com/Xilinx/dma_ip_drivers)
+
+本设计使用的驱动：[xdma_linux驱动下载](https://download.csdn.net/download/w18864443115/89504072?spm=1001.2014.3001.5503)
+
+### 驱动安装
+
+### 1、检查pci驱动
+
+打开 Linux 终端，输入“lspci”命令并执行， 如下图所示：
+
+![img](./media/0773fabc1c8b4c71abf04811a7b7fc35.png)![点击并拖拽以移动](data:image/gif;base64,R0lGODlhAQABAPABAP///wAAACH5BAEKAAAALAAAAAABAAEAAAICRAEAOw==)
+
+可以看到，没有 Xilinx 相关的信息，这是因为没有安装 XDMA 的 Linux 系统驱动。
+
+###  2、驱动安装
+
+下载好的驱动，存放到Linux上面
+
+由于提供的都是源码，需要编译安装然后才能使用。打开终端，输入如下命令：
+
+```bash
+cd ./dma_ip_drivers/XDMA/linux-kernel/xdma/
+sudo apt install build-essential #（如果之前没有安装过 build-essential，需要安装）
+sudo make install
+```
+
+驱动安装完成后，重启 Linux 系统主机。
+
+### 3、加载驱动
+
+现在打开终端，输入如下命令进入 xdma 驱动目录下的 tests 目录：
+
+```bash
+cd ./dma_ip_drivers/XDMA/linux-kernel/tests
+```
+
+该目录提供了驱动加载脚本及应用测试脚本，其中的 load_driver.sh 即为 XDMA 的驱动加载脚本。执行该脚本前需要先给该脚本赋予可执行权限，然后以 root 身份执行，命令如下：
+
+```bash
+chmod +x load_driver.sh
+sudo ./load_driver.sh
+```
+
+![img](./media/f0c106e72dc5ac58ce18f29f7c837830.png)![点击并拖拽以移动](data:image/gif;base64,R0lGODlhAQABAPABAP///wAAACH5BAEKAAAALAAAAAABAAEAAAICRAEAOw==)
+
+可以看到 XDMA 驱动已正确加载。
+
+###  4、检测XDMA设备
+
+在终端中输入“lspci”命令
+
+![img](./media/35591b33c303b841b7cf14643bb8c8a7.png)
+
+在终端中输入“ls /dev”命令并执行，可以在/dev 目录下看到以 xdma0 开头的设备文件，如下图所示：
+
+![img](./media/dd7cdb7492a5d0d8178d3c12010e4baf.png)
+
+以下是每个设备文件的简要说明：
+
+> 1. `/dev/xdma0_control`：用于控制和配置DMA设备。
+> 2. `/dev/xdma0_user`：用于用户自定义用途。
+> 3. `/dev/xdma0_xvc`：用于虚拟JTAG功能。
+> 4. `/dev/xdma0_events_*`：用于处理DMA事件（中断）。
+> 5. `/dev/xdma0_c2h_*`：用于从卡到主机（Card to Host，简称C2H）的DMA数据传输。
+> 6. `/dev/xdma0_h2c_*`：用于从主机到卡（Host to Card，简称H2C）的DMA数据传输。
+
+这表明Linux系统已正确安装 XDMA 驱动并检测到了 XDMA 设备。
+
+## 官方测试
+
+打开终端，输入如下命令进入 xdma 目录下的tests 目录：
+
+```bash
+cd ./dma_ip_drivers/XDMA/linux-kernel/
+cd tests/
+```
+
+需要给他们添加可执行权限：输入如下命令以执行 run_test.sh 脚本：
+
+```bash
+chmod +x run_test.sh
+chmod +x dma_memory_mapped_test.sh
+sudo ./run_test.sh
+```
+
+> run_test.sh 脚本用于测试基本的 XDMA 传输，并具有如下功能：
+>  ✓ 检测设计是基于 AXI-MM 接口还是 AXI_ST 接口，并查看启用了多少个通道；
+>  ✓ 对所有启用的通道进行基本传输测试；
+>  ✓ 检查数据完整性；
+>  ✓ 报告通过或失败
+
+![img](./media/af8c4ecee7e3ed53859c748fa2e11086.png)![点击并拖拽以移动](data:image/gif;base64,R0lGODlhAQABAPABAP///wAAACH5BAEKAAAALAAAAAABAAEAAAICRAEAOw==)
+
+测试结果的最后两行 passed 表明我们搭建的基于 XDMA 的 PCIe 通信子系统正确，且 XDMA 驱动安装和驱动示例程序运行正常。
+
+
+
+Linux 的 XDMA 测试应用是源码提供的，需要先编译。打开终端，输入如下命令进入 xdma 目录下的tools 目录并编译：
+
+```bash
+cd ./dma_ip_drivers/XDMA/linux-kernel/
+cd tools/
+make
+```
+
+编译后， tools 目录下有四个 XDMA 相关的测试应用，如下图所示：（第一次进来没有data_rd.bin文件）
+
+![img](./media/077373d909aeb371a91bae7764662b44.png)![点击并拖拽以移动](data:image/gif;base64,R0lGODlhAQABAPABAP///wAAACH5BAEKAAAALAAAAAABAAEAAAICRAEAOw==)编辑
+
+> **dma_to_device**
+>
+> - 这是一个可执行文件，用于将数据从主机内存写入到 FPGA 设备。
+>
+> **dma_from_device**
+>
+> - 这是一个可执行文件，用于从 FPGA 设备读取数据到主机内存。
+>
+> **performance**
+>
+> - 这是一个可执行文件，可能用于测试和评估 DMA 性能
+>
+> **reg_rw**
+>
+> - 这是一个可执行文件，可能用于读取和写入 FPGA 寄存器
+
+## 写入数据
+
+打开终端，进入tools目录，然后输入以下指令（首先准备好一个测试数据datafile4K.bin）：
+
+```bash
+sudo ./dma_to_device -d /dev/xdma0_h2c_0 -a 0x00000000 -s 2048 -f datafile4K.bin
+```
+
+这个命令将 data_to_write.bin 文件中的数据写入到 /dev/xdma0_h2c_0 设备的地址 0x00000000，长度为 2048 字节。
+
+## 读取数据
+
+打开终端，进入tools目录，然后输入以下指令
+
+```bash
+sudo ./dma_from_device -d /dev/xdma0_c2h_0 -a 0x00000000 -s 2048 -f data_rd.bin
+```
+
+这个命令从 /dev/xdma0_c2h_0 设备开始的地址 0x00000000 读取 2048 字节的数据，并保存到 data_rd.bin 文件中。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

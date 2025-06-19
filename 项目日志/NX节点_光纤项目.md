@@ -159,6 +159,7 @@ cd linux-5.15/tools/usb/usbip/
 #编译代码
 sudo ./autogen.sh
 sudo ./configure
+make -j4
 sudo make install 
 
 # 然后再src目录下就可以找到编译好的usbip和usbipd
@@ -166,6 +167,9 @@ sudo make install
 # 创建符号链接
 sudo ln -s /home/nvidia/FPGA/linux-5.15/tools/usb/usbip/libsrc/.libs/libusbip.so.0 /usr/lib/libusbip.so.0
 
+#或者 #暴露动态库
+sudo sh -c "echo /usr/local/lib >>/etc/ld.so.conf"
+sudo ldconfig
 
 ## 使用usbip
 # 两台机器都加载内核模块
@@ -183,10 +187,10 @@ sudo usbipd -D
 sudo usbip list -l
  
 #将设备绑定到 USBIP 服务上 -b后的内容 从上一步 list出的内容查看
-sudo usbip bind -b 1-2.1      
+sudo usbip bind -b 1-3
 
 #取消usb设备的bind挂载  id为bind挂载的usb设备id
-sudo usbip unbind --busid=ID  
+sudo usbip unbind --busid=1-3 
 # 找到进程pid
 ps aux | grep usbipd 
 #  杀掉usbipd的进程 PID为上面找到的
@@ -217,7 +221,7 @@ https://github.com/cezanne/usbip-win/releases
 **客户端（Linux）**
 
 ```bash
-# 安装usbip
+# 安装usbip （或者用源码）
 sudo apt install usbip
 # 加载内核模块 （同服务端）
 
@@ -263,6 +267,11 @@ usbipd: error while loading shared libraries: libusbip.so.0: cannot open shared 
 # 这个错误是因为系统找不到 libusbip.so.0 库文件
 # 因为是源码安装的 需要创建一个符号链接 （修改为自己的路径）
 sudo ln -s /home/nvidia/FPGA/linux-5.15/tools/usb/usbip/libsrc/.libs/libusbip.so.0 /usr/lib/libusbip.so.0  
+
+## 问题3
+A dependency job for remote-jtag.service failed. See'journalctl -xe'for details
+#问题分析
+# 没有安装usbip
 ```
 
 
@@ -546,6 +555,14 @@ sudo load_fpga <bitstream file name>
 ```
 
 ### 远程调试FPGA
+
+安装openocd
+
+```bash
+sudo apt install openocd
+```
+
+
 
 ```bash
 ## 启动remote-jtag服务，以支持上位机远程访问。
@@ -979,11 +996,52 @@ pressure 通过vio输入，然后传输到axi read模块，通过这个反压信
 
 
 
+# usbip找不到驱动
 
+**问题现象**![1e3eac23d6ab7417712b71475f2e249](./media/1e3eac23d6ab7417712b71475f2e249.png)
 
+**原因**
 
+内核源码没有勾选 这三个驱动
 
+```bash
+# 查询内核Linux 内核编译时会把 .config 内容保存到 /proc/config.gz，你可以通过如下方式查看是否启用了 USB/IP 模块。
+zcat /proc/config.gz | grep USBIP
+```
 
+![3e714e0491b41d102b6b621ac5a83fa](./media/3e714e0491b41d102b6b621ac5a83fa.png)
+
+正常勾选的现象为![0d54abc8d585c6aca147415bcb43c27](./media/0d54abc8d585c6aca147415bcb43c27.png)
+
+**解决办法**
+
+把之前完整的系统上的这几个驱动ko文件拷贝到这个开发板同样的目录下
+
+```bash
+#查询 之前开发板usbip-core.ko的文件路径
+find /lib/modules/$(uname -r) -type f -name "usbip-core.ko*"
+
+# 然后拷贝到同样位置到此开发板
+# 然后加载这三个模块  （单次）
+sudo insmod /lib/modules/5.15.136-tegra/kernel/drivers/usb/usbip/usbip-core.ko
+sudo insmod /lib/modules/5.15.136-tegra/kernel/drivers/usb/usbip/usbip-host.ko
+sudo insmod /lib/modules/5.15.136-tegra/kernel/drivers/usb/usbip/vhci-hcd.ko
+
+## 修改modules启动文件
+vim /etc/modules-load.d/usbip.conf
+
+usbip.conf内容为：“
+
+#/etc/modules-load.d/usbip.conf
+usbip-core
+usbip-host
+vhci-hcd
+
+”
+
+# 然后重启服务
+sudo systemctl restart remote-jtag
+```
 
 
 
