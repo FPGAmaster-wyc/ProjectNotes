@@ -691,7 +691,7 @@ dd if=/dev/urandom of=data.bin bs=65536 count=1024
 dd if=<(awk 'BEGIN{for(i=0;i<65536;i++) printf "%c", i%256}') of=data.bin bs=65536 count=16
 
 #通过udma_write发送
-./udma_write -W65536 -v data.bin
+sudo ./udma_write -W0x100000 -v data.bin
 ```
 
 ### udma_read
@@ -712,7 +712,7 @@ udma_read [-W <line size>] [-H <line count>] [-n <frame count>] [-v] [-h] <outpu
 
 ```bash
 #接收1024帧数据，每帧大小65536字节
-./udma_read -W65536 -v output.bin
+sudo ./udma_read_ur -W0x100000 -v output.bin
 #与输入文件比较
 cmp data.bin output.bin
 ```
@@ -1029,9 +1029,75 @@ sudo systemctl restart remote-jtag
 
 
 
+# 26.6.25测试记录
+
+## 接收数据
+
+接收数据：288MB 没问题
+
+![image-20250625133918910](.//media/image-20250625133918910.png)
+
+![image-20250625134049756](./media/image-20250625134049756.png)
 
 
 
+## 闭环测试
+
+
+
+
+
+
+
+
+
+三种模式
+
+1：接收他们的数据，他们的数据为 原始数据和处理好的图像数据（一般不用原始数据）
+
+2：我们自己处理数据
+
+3：发数据给他们，回传给他们
+
+
+
+
+
+
+
+
+
+## 小问题：
+
+
+
+pc发送数据，如果反压信号 没有的话 会一直写一点数据进去，需要修改FPGA去控制中断 让他不进行写数据 ，等待反压信号来了 再写
+
+
+
+
+
+
+
+
+
+# 代码版本
+
+加粗的，代表代码版本更新
+
+
+
+6.25 ：代码光传输没问题，反压信号有问题，漏掉很多数据
+
+6.26：发现问题，是因为时序违规导致的，之后测试需要删掉ila
+
+**6.27：增加了 默认帧大小为1MB**
+
+7.8：测试完成，没有加超时的功能 会少最后一帧数据，空天院测试完成
+
+`"F:\my_work\NX_Aruora\code\325T\0K\325T_XDMA_GTX_LOOP_0708_noila"`
+
+7.10：增加超时5s后，给最后一帧补0，然后发送给PC，在master分支上进行修改
 
 
 
