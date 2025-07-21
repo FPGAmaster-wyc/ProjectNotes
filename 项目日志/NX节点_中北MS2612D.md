@@ -81,8 +81,7 @@ xdma驱动要换成最新版，这里面没包含驱动
 
 ```bash
 # 重新加载服务
-sudo systemctl stop payload-retrieve.service
-sudo systemctl start payload-retrieve.service
+sudo systemctl restart payload-retrieve.service
 
 # 生成测试数据
 ./gen_td_frame -h0x1ACFFC1D -s896 -n4194304 data.bin
@@ -109,6 +108,18 @@ sudo cp -rf data.bin /var/opt/SatService/DLFile/TDFile
 
 
 测试方法变了，现在只要把文件复制到/var/opt/SatService/DLFile/TDFile/下就自动发送了，不用执行命令
+
+
+
+
+
+
+
+# LVDS回环接收程序
+
+
+
+**LVDS的接收要用下降沿接收，发送的时候用上升沿进行发送**
 
 
 
