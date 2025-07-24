@@ -121,6 +121,30 @@ winget upgrade --id Microsoft.PowerShell --source winget
 
 
 
+# Github问题
+
+**Github ping不通**
+
+在本地hosts文件中加入IP地址。
+
+hosts文件位于C:\Windows\System32\drivers\etc\hosts，打开hosts文件，在末尾添加如下IP：
+
+```
+140.82.112.4 github.com
+140.82.114.4 www.github.com
+199.232.5.194 github.global.ssl.fastly.net
+54.231.114.219 github-cloud.s3.amazonaws.com
+```
+
+
+
+**Github不能clone**
+
+```bash
+# 设置 Git 使用本地代理
+git config --global http.proxy http://127.0.0.1:7890
+```
+
 
 
 # 命令行下载zynq程序
