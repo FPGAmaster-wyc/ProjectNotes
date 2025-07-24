@@ -204,7 +204,7 @@ sudo ./rescan_pcie.sh
 
 
 
-# Linux读写xdma
+# Linux命令读写xdma
 
 ## 安装xdma驱动（linux版）
 
@@ -356,6 +356,18 @@ sudo ./dma_from_device -d /dev/xdma0_c2h_0 -a 0x00000000 -s 2048 -f data_rd.bin
 ```
 
 这个命令从 /dev/xdma0_c2h_0 设备开始的地址 0x00000000 读取 2048 字节的数据，并保存到 data_rd.bin 文件中。
+
+
+
+# Linux程序读写XDMA
+
+
+
+## linux发送数据给FPGA
+
+
+
+
 
 
 

@@ -14,7 +14,6 @@ eg：	git pull origin main
 
 ## 上传三部曲
 （1）git add		添加文件到暂存区
-	git add -u       只添加修改的文件
 	eg：	git add (文件名)	添加单独的文件nige
 	eg：	git add (.)		添加当前文件夹下所有文件 （. 不能省略）
 	
@@ -112,6 +111,15 @@ git restore file
 git checkout -- .  
 # 或者只丢弃特定文件
 git checkout -- Makefile udma_read.c udma_write.c
+```
+
+
+
+# 8、只添加修改的文件
+
+```bash
+# 只添加修改的文件
+git add -u 
 ```
 
 
