@@ -49,7 +49,7 @@
 
 连接方式
 
-![image-20241121141552411](./media/image-20241121141552411.png)
+![image-20241121141552411](../media/image-20241121141552411.png)
 
 
 
@@ -883,38 +883,6 @@ https://www.cnblogs.com/downey-blog/p/10473939.html
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # 遇到的报错：
 
 使用vitis烧写程序时报错“Could not read hardware specification. Please check platform associated with project”
@@ -923,7 +891,7 @@ https://www.cnblogs.com/downey-blog/p/10473939.html
 工程文件拷贝到别处后，很多配置信息丢失，需要重新配置。
 这个问题就是app project里的platfor[文件路径丢失导致的，重新添加platform文件
 
-![image-20240702164012220](E:\my_work\zu7ev\media\image-20240702164012220.png)
+![image-20240702164012220](..\media\image-20240702164012220.png)
 
 查看烧写的系统是否为可以存储的：
 

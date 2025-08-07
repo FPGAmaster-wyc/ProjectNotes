@@ -234,7 +234,7 @@ sudo ./rescan_pcie.sh
 
 ```bash
 cd ./dma_ip_drivers/XDMA/linux-kernel/xdma/
-sudo apt install build-essential #（如果之前没有安装过 build-essential，需要安装）
+sudo apt install gcc make build-essential #（如果之前没有安装过 build-essential，需要安装）
 sudo make install
 ```
 
@@ -361,12 +361,85 @@ sudo ./dma_from_device -d /dev/xdma0_c2h_0 -a 0x00000000 -s 2048 -f data_rd.bin
 
 # Linux程序读写XDMA
 
+需要安装libaio-dev库
 
+ ```bash
+  sudo apt-get install libaio-dev
+  
+ ```
 
 ## linux发送数据给FPGA
 
 
 
+通过io_uring高速读写xdma
+
+io_uring读写循环逻辑图（完整版）
+
+```pgsql
+┌──────────────────┐
+│ 初始化 io_uring  │
+│  io_uring_queue_init / setup │
+└─────────┬────────┘
+          │
+          ▼
+┌─────────────────────────────┐
+│ 创建和注册文件 / 缓冲区等资源 │
+│  open, malloc, io_uring_register │
+└─────────┬───────────────┘
+          │
+          ▼
+┌──────────────────────────────┐
+│ 提交读请求（READ）到 SQ（提交队列） │
+│  io_uring_get_sqe             │
+│  io_uring_prep_read / readv   │
+│  io_uring_submit              │
+└─────────┬─────────────────┘
+          │
+          ▼
+┌───────────────────────────┐
+│ 内核接收请求，放入 CQ（完成队列） │
+│  内核完成 read 操作后，填充 cqe   │
+└─────────┬──────────────┘
+          │
+          ▼
+┌─────────────────────────────┐
+│ 从 CQ 中获取完成事件（CQE）      │
+│  io_uring_wait_cqe / peek_cqe │
+└─────────┬────────────────┘
+          │
+          ▼
+┌──────────────────────────┐
+│ 处理读取的数据（业务逻辑）     │
+│  比如写到文件、打印、处理等     │
+└─────────┬─────────────┘
+          │
+          ▼
+┌────────────────────────────┐
+│ 提交写请求（WRITE）到 SQ        │
+│  io_uring_get_sqe            │
+│  io_uring_prep_write / writev│
+│  io_uring_submit             │
+└─────────┬────────────────┘
+          │
+          ▼
+┌─────────────────────────────┐
+│ 内核完成写入并放入 CQ（完成队列） │
+└─────────┬────────────────┘
+          │
+          ▼
+┌───────────────────────────┐
+│ 获取写完成事件（CQE）        │
+│ io_uring_wait_cqe / seen   │
+└─────────┬──────────────┘
+          │
+          ▼
+┌──────────────────────┐
+│ 释放资源、关闭文件等     │
+│ free, close, io_uring_queue_exit │
+└──────────────────────┘
+
+```
 
 
 
@@ -374,12 +447,112 @@ sudo ./dma_from_device -d /dev/xdma0_c2h_0 -a 0x00000000 -s 2048 -f data_rd.bin
 
 
 
+# XDMA寄存器映射表
 
+**方向是站在软件端定义**
 
+| 地址/偏移量 | 名称          | 方向 | 功能                                                         |
+| ----------- | ------------- | ---- | ------------------------------------------------------------ |
+| 0x00        | CONTROL       | W    | 控制寄存器，包括使能、复位等                                 |
+| 0x04        | STATUS        | R    | 状态寄存器，包括复位状态、时钟状态等                         |
+| 0x08        | IER           | W    | 中断控制寄存器，预留                                         |
+| 0x0C        | ISR           | R    | 中断状态寄存器，预留                                         |
+| 0x10~0x3C   | 保留          |      |                                                              |
+| 0x40        | RX_START      | R    | 接收缓冲区起始地址。目前作为FPGA的静态参数(parameter)，对软件是只读的。将来要考虑可通过软件设置。 |
+| 0x44        | RX_END        | R    | 接收缓冲区结束地址，该地址为最大写入地址+1，例如起始地址0x00000000，结束地址0x10000000，则可写入地址范围0x00000000~0x0FFFFFFF，即256MB。 |
+| 0x48        | RX_BUF_SIZE   | R    | 接收缓冲区的每一帧大小，单位为字节。例如0x400000，表示每帧缓冲区4MB，这也是允许的最大图像尺寸。 |
+| 0x4C        | RX_PC_NEXT    | W    | 接收数据读指针，表示软件下一次要读的帧的起始地址。软件每次读取一帧数据后，将C2H_RD_NEXT的新值写入。目前FPGA程序不使用这个指针，将来要考虑利用这个指针判断缓冲区是否已满，数据是否有溢出。 |
+| 0x50        | RX_FPGA_NEXT  | R    | 接收数据写指针，表示FPGA下一次要写入的帧的起始地址。FPGA每接收完一帧数据，将C2H_WR_NEXT的最新值更新。软件通过判断C2H_WR_NEXT的值，可以知道缓冲区中有多少数据。 |
+| 0x54        | RX_FRM_SIZE   | R    | 接收数据帧大小。单位为字节。FPGA将实际接收到的图像帧的大小更新到这个寄存器。软件可以读出，从而知道帧缓存中的实际数据大小。目前FPGA的帧大小采用静态参数，将来要考虑支持动态帧大小。 |
+| 0x58        | RX_FRM_WIDTH  | R    | 接收数据帧的宽度，单位为字节。                               |
+| 0x5C        | RX_FRM_HEIGHT | R    | 接收数据帧的高度，单位为行数。                               |
+| 0x60~0x7C   | 保留          |      |                                                              |
+| 0x80        | TX_START      | R    | 发送缓冲区起始地址。                                         |
+| 0x84        | TX_END        | R    | 发送缓冲区结束地址。                                         |
+| 0x88        | TX_BUF_SIZE   | R    | 发送缓冲区每帧大小，单位为字节。                             |
+| 0x8C        | TX_FPGA_NEXT  | R    | 发送数据读指针。表示FPGA写一次要读取并发送的数据帧的起始地址。FPGA每发送一帧后，将H2C_RD_NEXT的值更新。 |
+| 0x90        | TX_PC_NEXT    | W    | 发送数据写指针。表示软件下一次要写入的帧的起始地址。FPGA通过比较软件写入的H2C_WR_NEXT和H2C_RD_NEXT，如果H2C_RD_NEXT != H2C_WR_NEXT，则读取一帧发送。 |
+| 0x94        | TX_FRM_SIZE   | W    | 发送数据帧大小，单位为字节。由软件将要发送的数据帧大小写入这个寄存器。其实FPGA程序仅使用FRM_WIDTH和FRM_HEIGHT就可以了，这里的FRM_SIZE预留用作以后实现动态数据位宽。 |
+| 0x98        | TX_FRM_WIDTH  | W    | 发送数据帧的宽度，单位为字节。由软件将要发送的行长度写入这个寄存器，FPGA按照这里给出的大小将数据组成AXI-Stream的一个个Packet。 |
+| 0x9C        | TX_FRM_HEIGHT | W    | 发送数据帧的高度，单位为行数。由软件将要发送的行数写入这个寄存器，FPGA按照这里给出的数值发送给定数量的Packet。 |
+| 0xA0~0xBC   | 保留          |      |                                                              |
 
+# 基本操作流程
 
+FPGA和软件驱动之间使用DDR中的缓冲区进行数据交换。DDR存储区域划分成两个部分，分别是接收缓冲区和发送缓冲区。缓冲区的起始和结束地址分别用BUF_START和BUF_END表示，每个缓冲区的大小是缓冲帧大小BUF_SIZE的整数倍。
 
+FPGA提供regfile，软件通过XDMA的user端口经AXI-lite读写regfile，通过XDMA的C2H和H2C端口读写DDR。
 
+FPGA程序通过regfile的输入输出信号和软件之间传递寄存器的数值。
+
+寄存器方向标注为W的，是软件从AXI-lite写入，FPGA程序从regfile的output获取寄存器值。寄存器方向标注为R的，是FPGA程序从regfile的input给出值，由软件经AXI-lite读取。
+
+FPGA和软件驱动之间主要通过RD_NEXT和WR_NEXT实现缓冲队列的管理，接收时FPGA是写入方（负责维护C2H_WR_NEXT），软件是读取方（负责维护C2H_RD_NEXT）；发送时软件是写入方(负责维护H2C_WR_NEXT)，FPGA是读取方（负责维护H2C_RD_NEXT）。
+
+## 图像接收流程：
+
+### FPGA端的操作
+
+以接收为例，FPGA接收到数据时，从C2H_BUF_START开始，按照C2H_BUF_SIZE为步进，依次写入每帧数据。每写入一帧后，将C2H_WR_NEXT的地址增加：
+
+```verilog
+if (C2H_WR_NEXT + C2H_BUF_SIZE == C2H_BUF_END)
+	C2H_WR_NEXT = C2H_BUF_START;
+else
+	C2H_WR_NEXT = C2H_WR_NEXT+C2H_BUF_SIZE;
+```
+
+ 
+
+### 软件端的操作
+
+软件自己维护C2H_RD_NEXT的值，在读取到C2H_WR_NEXT变化后，发现C2H_WR_NEXT!=C2H_RD_NEXT，就认为缓冲区中存在有效数据。
+
+```c
+if (C2H_WR_NEXT != C2H_RD_NEXT)
+//发起XDMA从C2H_RD_NEXT地址读取一帧，然后增加C2H_RD_NEXT
+	if (C2H_RD_NEXT+C2H_BUF_SIZE == C2H_BUF_END)
+		C2H_RD_NEXT = C2H_BUF_START;
+	else
+		C2H_RD_NEXT = C2H_RD_NEXT + C2H_BUF_SIZE;
+else
+//没有数据，啥也不做
+```
+
+ 
+
+## 图像发送流程
+
+对于发送，情况类似，只是操作角色互换。软件负责写入H2C_WR_NEXT，FPGA负责更新H2C_RD_NEXT。
+
+### 软件端的操作
+
+软件在写入数据前先检测H2C_RD_NEXT和H2C_WR_NEXT，判断是否还有空间。如果有空，则向H2C_WR_NEXT地址写入一帧图像，之后增加H2C_WR_NEXT。
+
+```c
+if (H2C_WR_NEXT+H2C_BUF_SIZE == H2C_RD_NEXT || (H2C_WR_NEXT+H2C_BUF_SIZE==H2C_BUF_END && H2C_RD_NEXT == H2C_BUF_START))
+	//向H2C_WR_NEXT地址写入一帧图像，然后增加H2C_WR_NEXT
+	if (H2C_WR_NEXT+H2C_BUF_SIZE == H2C_BUF_END)
+		H2C_WR_NEXT = H2C_BUF_START;
+    else
+		H2C_WR_NEXT = H2C_WR_NEXT + H2C_BUF_SIZE;
+```
+
+ 
+
+### FPGA端的操作
+
+FPGA在检测到H2C_WR_NEXT != H2C_RD_NEXT时，认为缓存区中有新的数据，从H2C_RD_NEXT地址读取一帧发送，然后增加H2C_RD_NEXT。不断循环直到H2C_WR_NEXT==H2C_RD_NEXT，这代表缓冲区中没有数据了。
+
+```verilog
+while(H2C_WR_NEXT != H2C_RD_NEXT) {
+	//从H2C_RD_NEXT地址读取一帧并发送，然后更新H2C_RD_NEXT
+	if (H2C_RD_NEXT+H2C_BUF_SIZE == H2C_BUF_END)
+		H2C_RD_NEXT = H2C_BUF_START;
+	else
+		H2C_RD_NEXT = H2C_RD_NEXT+H2C_BUF_SIZE;
+}
+```
 
 
 
