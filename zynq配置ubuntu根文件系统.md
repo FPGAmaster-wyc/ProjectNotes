@@ -72,40 +72,177 @@ deb http://ports.ubuntu.com/ubuntu-ports/ noble-security main restricted univers
 
 ```sh
 #!/bin/bash
-mnt() {
-	echo "MOUNTING"
-	sudo mount -t proc /proc ${2}proc
-	sudo mount -t sysfs /sys ${2}sys
-	sudo mount -o bind /dev ${2}dev
-	sudo mount -o bind /dev/pts ${2}dev/pts
-	# sudo chroot ${2}
+
+SCRIPT_NAME=$(basename "$0")
+MOUNT_POINTS=("proc" "sys" "dev" "dev/pts")
+
+show_help() {
+    cat << EOF
+Usage: $SCRIPT_NAME [-m <path>] [-u <path>] 
+
+Mount or unmount directories for chroot environment.
+
+Options:
+  -m, --mount <path>    Mount proc, sys, dev and dev/pts to the specified path and chroot
+  -u, --umount <path>   Unmount previously mounted directories from the specified path
+  -h, --help           Show this help message
+
+Examples:
+  $SCRIPT_NAME -m /media/sdcard/
+  $SCRIPT_NAME -u /media/sdcard/
+EOF
 }
-umnt() {
-	echo "UNMOUNTING"
-	sudo umount ${2}proc
-	sudo umount ${2}sys
-	sudo umount ${2}dev/pts
-	sudo umount ${2}dev
+
+mount_directories() {
+    local target_path="$1"
+    echo "Mounting directories to $target_path"
+    
+    for mount_point in "${MOUNT_POINTS[@]}"; do
+        local source_path="/$mount_point"
+        local target_full_path="${target_path%/}/$mount_point"
+        
+        # 创建目标目录（如果不存在）
+        sudo mkdir -p "$target_full_path" 2>/dev/null
+        
+        if mountpoint -q "$target_full_path"; then
+            echo "  ⚠ Already mounted: $target_full_path"
+            continue
+        fi
+        
+        case $mount_point in
+            "proc")
+                sudo mount -t proc "$source_path" "$target_full_path" && \
+                echo "  ✓ Mounted proc → $target_full_path" || \
+                echo "  ❌ Failed to mount proc"
+                ;;
+            "sys")
+                sudo mount -t sysfs "$source_path" "$target_full_path" && \
+                echo "  ✓ Mounted sys → $target_full_path" || \
+                echo "  ❌ Failed to mount sys"
+                ;;
+            *)
+                sudo mount -o bind "$source_path" "$target_full_path" && \
+                echo "  ✓ Mounted $mount_point → $target_full_path" || \
+                echo "  ❌ Failed to mount $mount_point"
+                ;;
+        esac
+    done
 }
- 
-if [ "$1" == "-m" ] && [ -n "$2" ] ;
-then
-	mnt $1 $2
-elif [ "$1" == "-u" ] && [ -n "$2" ];
-then
-	umnt $1 $2
-else
-	echo ""
-	echo "Either 1'st, 2'nd or both parameters were missing"
-	echo ""
-	echo "1'st parameter can be one of these: -m(mount) OR -u(umount)"
-	echo "2'nd parameter is the full path of rootfs directory(with trailing '/')"
-	echo ""
-	echo "For example: ch-mount -m /media/sdcard/"
-	echo ""
-	echo 1st parameter : ${1}
-	echo 2nd parameter : ${2}
+
+unmount_directories() {
+    local target_path="$1"
+    echo "Unmounting directories from $target_path"
+    
+    # Unmount in reverse order to handle dependencies
+    for ((i=${#MOUNT_POINTS[@]}-1; i>=0; i--)); do
+        local mount_point="${MOUNT_POINTS[$i]}"
+        local target_full_path="${target_path%/}/$mount_point"
+        
+        if mountpoint -q "$target_full_path"; then
+            sudo umount "$target_full_path" 2>/dev/null && \
+                echo "  ✓ Unmounted $target_full_path" || \
+                echo "  ⚠ Failed to unmount $target_full_path (may be busy)"
+        else
+            echo "  ℹ Not mounted: $target_full_path"
+        fi
+    done
+}
+
+check_path() {
+    local path="$1"
+    local operation="$2"
+    
+    if [[ -z "$path" ]]; then
+        echo "Error: No path specified for $operation"
+        return 1
+    fi
+    
+    # 确保路径以斜杠结尾
+    if [[ "$path" != */ ]]; then
+        path="${path}/"
+    fi
+    
+    if [[ ! -d "$path" ]]; then
+        echo "Error: Target path '$path' does not exist or is not a directory"
+        return 1
+    fi
+    
+    echo "$path"
+    return 0
+}
+
+main() {
+    local target_path=""
+    local operation=""
+    
+    # Show help if no arguments provided
+    if [[ $# -eq 0 ]]; then
+        show_help
+        exit 1
+    fi
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -m|--mount)
+                operation="mount"
+                if [[ -z "$2" || "$2" == -* ]]; then
+                    echo "Error: No path specified for mount"
+                    show_help
+                    exit 1
+                fi
+                target_path=$(check_path "$2" "mount") || exit 1
+                shift 2
+                ;;
+            -u|--umount)
+                operation="umount"
+                if [[ -z "$2" || "$2" == -* ]]; then
+                    echo "Error: No path specified for umount"
+                    show_help
+                    exit 1
+                fi
+                target_path=$(check_path "$2" "umount") || exit 1
+                shift 2
+                ;;
+            -h|--help)
+                show_help
+                exit 0
+                ;;
+            *)
+                echo "Error: Unknown option '$1'"
+                show_help
+                exit 1
+                ;;
+        esac
+    done
+
+    case $operation in
+        "mount")
+            if mount_directories "$target_path"; then
+                echo -e "\n✅ Mount completed successfully!"
+                echo -e "You can now run: sudo chroot $target_path"
+                echo -e "Or press Enter to chroot now (Ctrl+D to exit)..."
+                read -p "Press Enter to continue or Ctrl+C to cancel..."
+                sudo chroot "$target_path"
+                echo -e "\nExited chroot environment"
+            else
+                echo -e "\n❌ Mount failed with errors"
+                exit 1
+            fi
+            ;;
+        "umount")
+            unmount_directories "$target_path"
+            echo -e "\n✅ Unmount completed!"
+            ;;
+    esac
+}
+
+# 检查是否是sudo运行
+if [[ $EUID -ne 0 ]]; then
+    echo "This script must be run as root or with sudo"
+    exit 1
 fi
+
+main "$@"
 ```
 
 保存退出后，给脚本增加执行权限，并挂载。
@@ -114,37 +251,51 @@ fi
 # 增加脚本执行权限
 sudo chmod +x mount.sh
 # 挂载文件系统
-./mount.sh -m ./ubuntu/
+sudo ./mount.sh -m ./ubuntu/
 # 进入根文件系统
 sudo chroot ./ubuntu/
+# 退出根文件系统
+exit
 # 卸载文件系统
-./mount.sh -u ./ubuntu/
+sudo ./mount.sh -u ./ubuntu/
 ```
 
 ### **安装必须包**
 
 ```shell
 apt-get update
-apt-get install sudo ssh net-tools ethtool vim openssh-server tzdata iputils-ping ifupdown iproute2 -y
+apt-get install sudo ssh net-tools ethtool vim openssh-server tzdata iputils-ping ifupdown iproute2 netplan.io udev -y
 ```
 
 ### **用户设置**
 
-添加用户
+**添加 user 用户**
 
 ```shell
 # 根据提示设置密码
 adduser user
+
+# 将用户添加到sudo组
+usermod -aG sudo user
 ```
 
-修改/etc/sudoers里面的内容，在root行下加上这句，然后你创建的用户就可以用sudo获得root权限了。
+**删除 ubuntu 用户**
 
-```shell
-vim /etc/sudoers
-xxx(用户名)    ALL=(ALL:ALL) ALL
+```bash
+# 删除用户及其主目录
+userdel -r ubuntu
+
+# 确认用户已删除
+cat /etc/passwd | grep -E "(ubuntu|user)"
 ```
 
-设置主机名称
+**设置root密码** （进入root用户的密码）
+
+```bash
+passwd root
+```
+
+**设置主机名称**
 
 ```shell
 echo "ubuntu-arm-zynq">/etc/hostname
@@ -157,6 +308,8 @@ echo "127.0.0.1 localhost">>/etc/hosts
 echo "127.0.0.1 ubuntu-arm-zynq">>/etc/hosts
 echo "127.0.0.1 localhost ubuntu-arm-zynq" >> /etc/hosts
 ```
+
+
 
 ### **DNS配置问题**
 
@@ -189,6 +342,7 @@ dpkg-reconfigure tzdata
 mkdir /etc/init
 vim /etc/init/ttyPS0.conf
 
+[文件内容]
 start on stoppedrc or RUNLEVEL=[12345]
 stop on runlevel[!12345]
 respawn
@@ -225,15 +379,20 @@ gateway 192.168.3.1
 hwaddress ether 00:11:22:33:44:55  # 设置新的 MAC 地址（不需要改 可以删除这一行）
 ```
 
-**netplan服务**
+**netplan服务（推荐）**
 
 ```shell
-sudo vi /etc/netplan/networkmanager.yaml
+sudo vi /etc/netplan/01-network.yaml
 
 ## 放入以下内容（注意缩进保持下面不变）（自动获取ip）
 network:
-    version: 2
-    renderer: NetworkManager
+  version: 2
+  renderer: networkd
+  ethernets:
+    eth0:
+      dhcp4: true
+      dhcp6: false
+
 ## 固定IP
 network:
   version: 2
@@ -246,15 +405,26 @@ network:
         addresses:
           - 8.8.8.8
           - 8.8.4.4
-```
 
-**然后启动配置并重启**
+# 设置权限
+chmod 600 /etc/netplan/01-network.yaml
+chown root:root /etc/netplan/01-network.yaml
 
-```shell
+# 启用 systemd 服务
+systemctl enable systemd-networkd
+systemctl enable systemd-resolved
+
+# 设置 DNS 链接
+ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+
+# 然后启动配置并重启
 sudo netplan generate
 sudo netplan apply
+
 sudo reboot
 ```
+
+
 
 现在，这将自动配置 ubuntu 网络设置。最后，您应该能够连接到网络/互联网
 
@@ -380,7 +550,7 @@ source ~/.bashrc
 
 
 
-修改为中文语言
+### **修改为中文语言**
 
 1. 改成中文语言
 
@@ -410,23 +580,105 @@ source ~/.bashrc
 
 
 
+### **修改启动提示信息**
+
+**修改 issue 文件**（输入密码前提示信息）
+
+```bash
+# 备份原始文件
+cp /etc/issue /etc/issue.backup
+cp /etc/issue.net /etc/issue.net.backup
+
+# 编辑 issue 文件
+vim /etc/issue
+
+\e[1;32m===============================================\e[0m
+\e[1;32m        Zynq Ubuntu Root Filesystem\e[0m
+\e[1;32m===============================================\e[0m
+
+\e[1;33m*** SYSTEM INFORMATION ***\e[0m
+   �~V� Hardware: \e[1;36mXilinx Zynq-7000 ARM\e[0m
+   �~V� OS: \e[1;36mUbuntu 20.04 LTS\e[0m
+   �~V� Terminal: \e[1;36mttyPS0\e[0m
+
+\e[1;33m*** LOGIN CREDENTIALS ***\e[0m
+   �~V� Username: \e[1;31muser\e[0m
+   �~V� Password: \e[1;31mpassword\e[0m
+   \e[1;33mPlease change password after first login!\e[0m
+
+\e[1;32m===============================================\e[0m
+
+# 复制到 /etc/issue.net 文件
+cp /etc/issue /etc/issue.net
+```
+
+**修改 motd 文件**（输入密码后提示信息,自定义）
+
+```bash
+# 现在一台ubuntu上生成motd文件
+# 安装生成 ASCII 大字工具
+sudo apt-get install figlet toilet
+
+# 生成大字 到motd文件（以 FPGA master 为例）
+echo -e "\e[1;36m$(figlet FPGA master)\e[0m" | ./motd
+
+# 将 motd 文件，放入/etc目录，然后去编辑
+vim /etc/motd
+
+Welcome to Zynq system Ubuntu 20.04 LTS !!!
+
+^[[1;36m _____ ____   ____    _                          _
+|  ___|  _ \ / ___|  / \     _ __ ___   __ _ ___| |_ ___ _ __
+| |_  | |_) | |  _  / _ \   | '_ ` _ \ / _` / __| __/ _ \ '__|
+|  _| |  __/| |_| |/ ___ \  | | | | | | (_| \__ \ ||  __/ |
+|_|   |_|    \____/_/   \_\ |_| |_| |_|\__,_|___/\__\___|_|
+                                                              ^[[0m
+
+ * Documentation:  https://blog.csdn.net/w18864443115
+ * Github:         https://github.com/FPGAmaster-wyc
+ * Support:        https://postimg.cc/nsWYsg8f
+
+ * If you encounter any issues during use, feel free to reach
+   out to me for discussion.Let's learn together and make progress
+   side by side.
+
+Best wishes for you !!!
+
+
+
+
+```
+
+**修改 update-motd.d 目录内的脚本**（输入密码后提示信息,系统）
+
+`/etc/update-motd.d/` 目录下的一系列脚本（比如 `00-header`, `10-help-text`, `50-motd-news`, `90-updates-available` 等）会动态生成登录提示
 
 
 
 
 
+### **修改串口重复打印bug**
 
+```bash
+# 修改 getty@ttyPS0.service 的 override 文件 （防止重新打开一个串口）
+mkdir -p /etc/systemd/system/getty@ttyPS0.service.d
+vim /etc/systemd/system/getty@ttyPS0.service.d/override.conf
 
+# 内容写入：
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --noclear ttyPS0 115200 linux
+TTYVHangup=no
+TTYVTDisallocate=no
 
+# 重新加载 systemd 并重启 getty
+systemctl daemon-reexec
+systemctl restart getty@ttyPS0.service
 
+# mask 掉 systemd 的 serial-getty@ttyPS0.service (防止两个串口打印)
+systemctl mask serial-getty@ttyPS0.service
 
-
-
-
-
-
-
-
+```
 
 
 
@@ -448,7 +700,7 @@ source ~/.bashrc
 
 此时的linux并没有包含PL端的设备驱动，需要把petalinux生成的rootfs里面的/lib文件夹内的内容，覆盖到ubuntu中
 
-同时需要把硬件驱动firmware复制到ubuntu
+同时需要把硬件驱动firmware（无线网卡、显卡、声卡固件）复制到ubuntu
 
 ```shell
 sudo cp -rf ./lib/module/. /media/linuxusb/ROOT/lib/module/

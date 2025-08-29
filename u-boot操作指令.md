@@ -105,7 +105,7 @@ load usb 0 0x10000000 system.bit
 
 
 
-# 网络变量设置、TFTP服务
+# 网络TFTP服务
 
 ```bash
 ## 开发板 IP 地址
@@ -169,6 +169,9 @@ setenv my_emmc_bit "mmc dev 0:1 && load mmc 0:1 0x10000000 system.bit && fpga lo
 ```shell
 ## 查询启动内核指令：
 print bootcmd
+
+## 查询所有指令
+printenv
 
 ## 添加指令
 setenv my_emmc_bit "mmc dev 0:1 && load mmc 0:1 0x10000000 system.bit && fpga loadb 0 0x10000000 ${filesize}"
